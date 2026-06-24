@@ -1,0 +1,455 @@
+<?php
+
+use Livewire\Component;
+use Maatwebsite\Excel\Facades\Excel;
+
+new class extends Component {
+    public float $ancho = 150;
+    public float $alto = 99;
+    public int $numCorredizas = 2;
+
+    public array $ventanas = [];
+    public int $ventanaActiva = 0;
+
+    public ?string $sistemaSelet = null;
+    public array $ordenBloques = [];
+    public array $data = [];
+    public $planoExportHtml = null;
+
+    protected float $vidrio = 0.6;
+    protected float $pffijo = 0.3;
+    protected float $pfcorrediza = 2.0;
+    protected float $sobreluz = 2.1;
+    protected float $sbancho = 0.3;
+    protected float $vfijo = 1.0;
+    protected float $vcorrediza = 3.5;
+
+    public function mount()
+    {
+        $this->procesarPerfiles();
+        $this->guardarVentanaActual();
+
+        $this->ventanas = session('ventanas', [
+            [
+                'nombre' => 'V - 1',
+                'ancho' => $this->ancho,
+                'alto' => $this->alto,
+                'numCorredizas' => $this->numCorredizas,
+                'ordenBloques' => [],
+                'sistemaSelet' => null,
+            ],
+        ]);
+
+        $this->ventanaActiva = 0;
+        $this->cargarVentanaActiva();
+    }
+
+    private function num($v, float $d = 0): float
+    {
+        return is_numeric($v) && $v > 0 ? (float) $v : $d;
+    }
+
+    private function div($a, $b, float $d = 0): float
+    {
+        return ($b = $this->num($b)) === 0 ? $d : $this->num($a) / $b;
+    }
+
+    private function trunc($v, int $d = 1): float
+    {
+        $f = 10 ** $d;
+        return floor($this->num($v) * $f) / $f;
+    }
+
+    public function getAnchoAjustadoProperty(): float
+    {
+        return match ($this->divisionesInferiores) {
+            3 => $this->ancho + 1,
+            5 => $this->ancho + 2,
+            6 => $this->ancho + 3,
+            default => $this->ancho,
+        };
+    }
+
+    public function getBloquesProperty(): array
+    {
+        return array_fill(0, $this->divisionesInferiores, 'Corrediza');
+    }
+
+    public function getDivisionesInferioresProperty(): int
+    {
+        return $this->numCorredizas;
+    }
+
+    public function getMedidasBloquesProperty(): array
+    {
+        $base = $this->div($this->anchoAjustado, $this->divisionesInferiores);
+        return collect($this->bloques)
+            ->map(fn($t) => [
+                'tipo' => $t === 'Fijo' ? 'F' : 'C',
+                'ancho' => $this->trunc($base + ($t === 'Fijo' ? $this->vidrio : -$this->vidrio)),
+                'alto' => $this->trunc($this->alto - ($t === 'Fijo' ? $this->vfijo : $this->vcorrediza)),
+            ])
+            ->toArray();
+    }
+
+    public function getDetalleModulosProperty(): array
+    {
+        $det = [];
+        $w = $this->trunc($this->ancho);
+
+        $det['U 3/4'] = ['label' => '3188', 'alto' => $w, 'cantidad' => 1];
+        $det['T/M'] = ['label' => '8444', 'alto' => $w, 'cantidad' => 1];
+
+        $c = [];
+        foreach ($this->medidasBloques as $b) {
+            $a = number_format($b['ancho'], 1, '.', '');
+            if ($b['tipo'] === 'C') {
+                $c[$a] = ($c[$a] ?? 0) + 1;
+            }
+        }
+
+        foreach ($c as $a => $n) {
+            $det["H ($a)"] = ['label' => '8220', 'alto' => $a + 0.6, 'cantidad' => $n];
+        }
+
+        $det['PF Corrediza'] = [
+            'label' => '8115',
+            'tipo' => 'CORREDIZA',
+            'alto' => $this->trunc($this->alto - $this->pfcorrediza),
+            'cantidad' => $this->numCorredizas * 2,
+        ];
+
+        return $det;
+    }
+
+    private function snapshotVentana(): array
+    {
+        return [
+            'ancho' => $this->ancho,
+            'alto' => $this->alto,
+            'numCorredizas' => $this->numCorredizas,
+            'ordenBloques' => $this->ordenBloques,
+            'sistemaSelet' => $this->sistemaSelet,
+        ];
+    }
+
+    private function guardarVentanaActual(): void
+    {
+        if (!isset($this->ventanas[$this->ventanaActiva])) {
+            return;
+        }
+        $this->ventanas[$this->ventanaActiva] = array_merge(['nombre' => $this->ventanas[$this->ventanaActiva]['nombre']], $this->snapshotVentana());
+    }
+
+    private function cargarVentanaActiva(): void
+    {
+        $v = $this->ventanas[$this->ventanaActiva];
+        $this->ancho = $v['ancho'];
+        $this->alto = $v['alto'];
+        $this->numCorredizas = $v['numCorredizas'];
+        $this->ordenBloques = $v['ordenBloques'] ?? [];
+        $this->sistemaSelet = $v['sistemaSelet'] ?? null;
+    }
+
+    public function cambiarVentana(int $i): void
+    {
+        $this->guardarVentanaActual();
+        $this->ventanaActiva = $i;
+        $this->cargarVentanaActiva();
+    }
+
+    public function agregarVentana(): void
+    {
+        $this->guardarVentanaActual();
+        $this->ventanas[] = array_merge(['nombre' => 'V - ' . (count($this->ventanas) + 1)], $this->snapshotVentana());
+        $this->ventanaActiva = count($this->ventanas) - 1;
+        $this->cargarVentanaActiva();
+        $this->dispatch('correcto', 'Vista agregada con éxito');
+    }
+
+    public function updated($propertyName)
+    {
+        $this->guardarVentanaActual();
+        session()->put('ventanas', $this->ventanas);
+    }
+
+    public function procesarPerfiles(): void
+    {
+        $ruta = public_path('datos.xlsx');
+        if (!file_exists($ruta)) {
+            return;
+        }
+        $this->data = collect(Excel::toArray([], $ruta)[0])
+            ->pluck(0)
+            ->filter()
+            ->values()
+            ->toArray();
+    }
+
+    public function getAccesoriosProperty(): array
+    {
+        return [
+            'garruchas' => $this->numCorredizas * 2,
+            'pestillos' => $this->numCorredizas,
+            'topes' => $this->numCorredizas * 2,
+        ];
+    }
+
+    public function confirmarImpresion(): void
+    {
+        session()->forget(['datos_lote', 'ventanas']);
+        session()->save();
+        $this->ventanas = [
+            [
+                'nombre' => 'V - 1',
+                'ancho' => $this->ancho,
+                'alto' => $this->alto,
+                'numCorredizas' => $this->numCorredizas,
+                'ordenBloques' => [],
+                'sistemaSelet' => null,
+            ],
+        ];
+        $this->ventanaActiva = 0;
+    }
+
+    public function eliminarVentana(int $index): void
+    {
+        if (count($this->ventanas) <= 1) {
+            return;
+        }
+
+        unset($this->ventanas[$index]);
+        $this->ventanas = array_values($this->ventanas);
+
+        if ($this->ventanaActiva >= count($this->ventanas)) {
+            $this->ventanaActiva = count($this->ventanas) - 1;
+        }
+
+        $this->cargarVentanaActiva();
+        session()->put('ventanas', $this->ventanas);
+        $this->dispatch('delete', 'Vista eliminada con éxito');
+    }
+};
+
+?>
+
+<div wire:cloak class="relative p-2 md:p-6 max-w-6xl mx-auto mb-[100px]">
+    <p class="text-2xl text-slate-500 font-extrabold tracking-widest mb-6">
+        {{ $ventanas[$ventanaActiva]['nombre'] ?? '—' }}
+    </p>
+
+    <div class="lg:flex grid grid-cols-1 lg:gap-2 justify-between items-center gap-1 mb-6 px-2 overflow-x-auto border-b border-gray-200">
+        <div class="flex flex-wrap items-center gap-2">
+            @foreach ($ventanas as $index => $v)
+                <div class="group relative flex items-center rounded-t-xl border transition-all {{ $ventanaActiva == $index ? 'bg-white border-gray-200 text-blue-600 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]' : 'bg-gray-100 border-transparent text-gray-400 hover:bg-gray-200' }}">
+                    <button wire:click="cambiarVentana({{ $index }})" class="flex items-center gap-2 px-5 py-2 text-xs font-black uppercase tracking-tighter focus:outline-none">
+                        <i class="fa-solid fa-window-maximize"></i>
+                        {{ $v['nombre'] }}
+                    </button>
+                    <button wire:click.stop="eliminarVentana({{ $index }})" class="absolute -right-1 -top-1 w-5 h-5 rounded-full bg-red-500 text-white text-[10px] opacity-0 group-hover:opacity-100 transition lg:hover:bg-red-600 flex items-center justify-center shadow">
+                        ✕
+                    </button>
+                </div>
+            @endforeach
+
+            <button wire:click="agregarVentana" class="ml-2 px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold">
+                <i class="fa-solid fa-plus-circle"></i> Nuevo
+            </button>
+            <button wire:click="confirmarImpresion" class="ml-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center gap-2 text-xs font-bold">
+                <i class="fa-solid fa-trash"></i> Vaciar
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2 lg:gap-6 p-2 mb-6 md:grid-cols-2 lg:grid-cols-2 max-w-md">
+        <div class="relative group">
+            <label class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Ancho <span class="text-blue-500">(cm)</span></label>
+            <input type="number" wire:model.lazy="ancho" class="w-full px-4 py-3 font-bold text-gray-700 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none">
+        </div>
+        <div class="relative group">
+            <label class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase">Alto <span class="text-blue-500">(cm)</span></label>
+            <input type="number" wire:model.lazy="alto" class="w-full px-4 py-3 font-bold text-gray-700 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none">
+        </div>
+    </div>
+
+    <div class="flex flex-col items-center justify-center p-4 border border-gray-200 shadow-inner bg-gray-50 md:p-6 rounded-3xl">
+        <div class="w-full text-center" id="area-mapa-corte">
+            <div class="mb-10">
+                <span class="px-6 py-2 bg-blue-600 text-white text-xs font-black rounded-full uppercase tracking-widest shadow-lg">
+                    {{ $sistemaSelet ?? 'PLANO TÉCNICO: SISTEMA NOVA' }}
+                </span>
+            </div>
+
+            <div class="relative mx-auto mt-4 mb-12 w-[90%] max-w-[700px] h-[200px] lg:h-[350px]">
+                <div class="absolute top-0 flex items-center justify-center -left-4 h-full lg:-left-14">
+                    <div class="w-[2px] h-full relative bg-blue-400">
+                        <div class="absolute -top-1 -left-[4px] text-[10px] text-blue-400">▲</div>
+                        <div class="absolute -bottom-1 -left-[4px] text-[10px] text-blue-400">▼</div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="-rotate-45 bg-gray-50 px-2 lg:text-[14px] text-[10px] font-bold text-gray-600 border border-slate-200 rounded whitespace-nowrap">
+                                {{ $alto }} cm
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="absolute -bottom-8 lg:-bottom-12 left-0 w-full flex justify-center h-4">
+                    <div class="w-full h-[2px] relative bg-slate-400">
+                        <div class="absolute -left-1 -top-[5px] text-[10px] text-slate-400">◀</div>
+                        <div class="absolute -right-1 -top-[5px] text-[10px] text-slate-400">▶</div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <div class="bg-gray-50 px-3 lg:text-[14px] text-[10px] font-bold text-gray-600 border border-slate-200 rounded">
+                                {{ $ancho }} cm
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="plano-2d" class="w-full h-full border-[2px] lg:border-[8px] border-gray-900 bg-gray-800 relative flex flex-col shadow-inner overflow-hidden">
+                    <div id="bloques" class="flex w-full grow overflow-hidden" style="height: {{ ($this->alto / $alto) * 100 }}%;" x-data="{ abierto: null }">
+                        @foreach ($this->medidasBloques as $i => $mod)
+                            <div @click="(abierto === null || abierto === {{ $i }}) && (abierto = abierto === {{ $i }} ? null : {{ $i }})"
+                                class="flex-1 border-r-[2px] border-gray-900 relative flex flex-col cursor-pointer items-center justify-center bg-sky-200 border border-b-[15px]"
+                                :style="abierto === {{ $i }} ? 'transform: translateX(-100%); z-index: 10; transition: transform 0.8s ease;' : 'transform: translateX(0); z-index: 1; transition: transform 0.8s ease;'">
+
+                                <div class="absolute top-3 left-3 px-2 py-0.5 text-[10px] font-black bg-yellow-400 text-yellow-900">
+                                    {{ $mod['tipo'] }}{{ $i + 1 }}
+                                </div>
+
+                                <div class="text-center">
+                                    <p class="lg:text-[10px] text-[8px] font-black text-blue-800 uppercase">Vidrio</p>
+                                    <span class="lg:text-[11px] text-[9px] font-mono font-black text-blue-950">
+                                        {{ $mod['ancho'] }} x {{ $mod['alto'] }}
+                                    </span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+
+            <div class="w-full mt-10 p-2 lg:p-6 bg-white rounded-2xl border border-dashed border-slate-300">
+                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-layer-group"></i> Mapeo de Componentes
+                </h4>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div class="w-8 h-8 bg-gray-900 rounded shadow-lg flex items-center justify-center">
+                            <div class="w-4 h-4 border border-white/20"></div>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold text-gray-800 leading-none">Perfiles</p>
+                            <p class="text-[9px] text-gray-400">Aluminio Negro</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                        <div class="w-8 h-8 bg-yellow-400 rounded shadow-lg flex items-center justify-center">
+                            <i class="fa-solid fa-arrows-left-right text-yellow-900 text-[10px]"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold text-gray-800 leading-none">Corredizas</p>
+                            <p class="text-[9px] text-gray-400">Móviles Amarillo</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:p-6 p-2 mt-4 lg:mt-10 transition-all duration-300 border shadow-2xl bg-slate-50/50 rounded-3xl border-slate-200/60 backdrop-blur-sm">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="flex items-center justify-center w-10 h-10 text-white shadow-lg bg-gradient-to-br bg-blue-600 to-indigo-700 rounded-xl">
+                <i class="fa-solid fa-list-check text-sm"></i>
+            </div>
+            <h2 class="lg:text-2xl text-md font-black tracking-tight text-slate-800">Resumen detallado</h2>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 lg:gap-6 gap-2 lg:mb-10 mb-4 sm:grid-cols-2">
+            <div class="relative p-2 lg:p-5 overflow-hidden transition-transform bg-white border border-blue-100 shadow-sm group hover:-translate-y-1 rounded-2xl">
+                <div class="absolute top-0 right-0 w-16 h-16 -mr-6 -mt-6 transition-transform group-hover:scale-110 opacity-10 bg-blue-600 rounded-full"></div>
+                <p class="text-[10px] font-bold text-blue-500 uppercase tracking-widest mb-1">Ancho Ajustado</p>
+                <p class="lg:text-3xl text-xl font-black text-slate-800">{{ $this->anchoAjustado }} <span class="text-sm font-medium text-slate-400">cm</span></p>
+            </div>
+        </div>
+
+        <div class="overflow-hidden scroll-auto bg-white border shadow-sm border-slate-200 rounded-2xl">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="lg:px-6 px-2 lg:py-4 py-2 lg:text-[11px] text-[8px] font-black text-slate-500 uppercase tracking-widest">Detalle del Perfil / Accesorio</th>
+                        <th class="lg:px-6 px-2 lg:py-4 py-2 lg:text-[11px] text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">Medida</th>
+                        <th class="lg:px-6 px-2 lg:py-4 py-2 lg:text-[11px] text-[8px] font-black text-slate-500 uppercase tracking-widest text-center">Cant.</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y w-full divide-slate-100">
+                    @foreach ($this->detalleModulos as $item)
+                        @php
+                            $codigoBuscado = $item['label'];
+                            $nombreProductoExcel = 'Perfil no identificado';
+
+                            foreach ($this->data as $nombreCompleto) {
+                                if (str_contains((string) $nombreCompleto, (string) $codigoBuscado)) {
+                                    $nombreProductoExcel = $nombreCompleto;
+                                    break;
+                                }
+                            }
+                            if ($codigoBuscado === '8115' && isset($item['tipo'])) {
+                                $nombreProductoExcel .= ' - ' . $item['tipo'];
+                            }
+                        @endphp
+
+                        <tr class="transition-colors hover:bg-blue-50/30 group">
+                            <td class="lg:px-6 px-2 lg:py-4 py-2">
+                                <div class="flex flex-col">
+                                    <span class="lg:text-sm text-xs font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{{ $nombreProductoExcel }}</span>
+                                    <span class="lg:text-[10px] text-[8px] font-mono font-bold text-slate-400">COD: {{ $codigoBuscado }}</span>
+                                </div>
+                            </td>
+                            <td class="lg:px-6 px-3 lg:py-4 py-2 text-center">
+                                <span class="inline-flex items-center px-3 py-1 lg:text-sm text-xs font-black text-blue-700 rounded-md lg:rounded-full bg-blue-50">
+                                    {{ $item['alto'] }} cm
+                                </span>
+                            </td>
+                            <td class="lg:px-6 px-4 lg:py-4 py-2 text-center">
+                                <span class="inline-flex items-center justify-center w-8 h-8 text-xs font-bold rounded-lg bg-slate-100 text-slate-600 border border-slate-200">
+                                    {{ $item['cantidad'] }}
+                                </span>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div wire:loading class="fixed inset-0 z-50 bg-gray-500/50">
+        <div class="absolute inset-0 flex items-center justify-center">
+            <img src="{{ asset('img/tape.gif') }}" alt="" class="rounded-full w-40 h-40">
+        </div>
+    </div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
+</div>
+
+<script>
+    window.addEventListener('correcto', (event) => {
+        iziToast.success({
+            message: event.detail[0] ?? event.detail,
+            position: 'topRight',
+            timeout: 5000,
+            theme: 'light',
+            transitionIn: 'bounce',
+            zindex: 999999
+        });
+    });
+    window.addEventListener('delete', (event) => {
+        iziToast.info({
+            message: event.detail[0] ?? event.detail,
+            position: 'topRight',
+            timeout: 5000,
+            theme: 'light',
+            transitionIn: 'bounce',
+            zindex: 999999
+        });
+    });
+</script>
