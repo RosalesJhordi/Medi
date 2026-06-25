@@ -101,8 +101,8 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component {};
                 <span class="text-sm font-bold text-gray-700">Puerta</span>
             </a>
 
-            <a wire:navigate
-                class="relative flex cursor-not-allowed flex-col items-center justify-center
+            <a wire:navigate href="{{ route('mamparas') }}"
+                class="relative flex cursor-pointer flex-col items-center justify-center
           w-full lg:w-1/2 h-40 lg:w-40 lg:h-40
           p-2 lg:p-4 space-y-3
           transition-transform
@@ -114,9 +114,9 @@ new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component {};
                     class="absolute -top-2 -right-2
                  px-2.5 py-1
                   font-bold uppercase tracking-wide
-                 bg-amber-500 text-white
+                 bg-green-500 text-white
                  rounded-full shadow-md text-[8px]">
-                    Próximamente
+                    Disponible
                 </span>
 
                 <div class="icon font-extrabold text-7xl drop-shadow-[0_0_20px_#FFD700]">

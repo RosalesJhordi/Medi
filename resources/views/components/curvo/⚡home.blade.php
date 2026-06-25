@@ -70,7 +70,7 @@ new class extends Component {
                             Cuerda (cm)
                         </label>
 
-                        <input type="number" step="0.01" min="0" wire:model.live="cuerda"
+                        <input type="number" step="0.01" min="0" wire:model.lazy="cuerda"
                             class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none">
                     </div>
 
@@ -79,7 +79,7 @@ new class extends Component {
                             Flecha (cm)
                         </label>
 
-                        <input type="number" step="0.01" min="0" wire:model.live="flecha"
+                        <input type="number" step="0.01" min="0" wire:model.lazy="flecha"
                             class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none">
                     </div>
 
@@ -88,7 +88,7 @@ new class extends Component {
                             Altura (cm)
                         </label>
 
-                        <input type="number" step="0.01" min="0" wire:model.live="altura"
+                        <input type="number" step="0.01" min="0" wire:model.lazy="altura"
                             class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-400 focus:border-blue-400 outline-none">
                     </div>
 

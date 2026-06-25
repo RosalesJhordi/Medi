@@ -133,11 +133,14 @@ new class extends Component {
         $descuentoMarco = 0.3;
         $descuentoNave = 2;
 
-        $medidaMarcoAlto = $this->alto - $descuentoMarco;
-        $medidaMarcoAncho = $this->ancho - $descuentoMarco;
+        $ancho = (float) $this->ancho;
+        $alto = (float) $this->alto;
 
-        $medidaNaveAlto = $this->alto - $descuentoNave;
-        $medidaNaveAncho = $this->ancho - $descuentoNave;
+        $medidaMarcoAlto = $alto - $descuentoMarco;
+        $medidaMarcoAncho = $ancho - $descuentoMarco;
+
+        $medidaNaveAlto = $alto - $descuentoNave;
+        $medidaNaveAncho = $ancho - $descuentoNave;
 
         $this->datos = [
             [
@@ -217,13 +220,13 @@ new class extends Component {
         <div class="relative group"> <label
                 class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase"> Ancho <span
                     class="text-blue-500">(cm)</span> </label> <input type="number" min="1"
-                wire:model.live="ancho"
+                wire:model.lazy="ancho"
                 class="w-full px-4 py-3 font-bold text-gray-700 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none">
         </div>
         <div class="relative group"> <label
                 class="block mb-2 ml-1 text-xs font-bold tracking-wider text-gray-500 uppercase"> Alto <span
                     class="text-blue-500">(cm)</span> </label> <input type="number" min="1"
-                wire:model.live="alto"
+                wire:model.lazy="alto"
                 class="w-full px-4 py-3 font-bold text-gray-700 border-2 border-gray-200 rounded-2xl focus:border-blue-500 outline-none">
         </div>
     </div>

@@ -15,6 +15,7 @@ Route::get('/plano-imprimir', function () {
 Route::livewire('/ventanas', 'ventanas.home')->name('ventanas');
 //ruta puertas
 Route::livewire('/puertas', 'puertas.home')->name('puertas');
-
+//Ruta mamapra
+Route::livewire('/mamparas','mamparas.home')->name('mamparas');
 //curvo
 Route::livewire('/curvo', 'curvo.home')->name('curvo');
