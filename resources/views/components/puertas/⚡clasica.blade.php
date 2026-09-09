@@ -1,50 +1,79 @@
+
 <?php
 
 use Livewire\Component;
 use Maatwebsite\Excel\Facades\Excel;
 
 new class extends Component {
+
     public int $material = 7852;
+
+    // MEDIDAS INGRESADAS POR EL USUARIO
     public float $anchoTotal = 90;
     public float $altoTotal = 220;
+
+    // MEDIDAS PARA CÁLCULO
+    public float $anchoCalculo = 0;
+    public float $altoCalculo = 0;
+
     public string $color = 'negro';
 
     public float $tubo = 2.5;
     public float $canal = 2.2;
     public float $cuadrado = 3.8;
     public float $paflon = 8.2;
+
     public float $luzArriba = 0.5;
     public float $luzAbajo = 1;
     public float $luzLados = 0.6;
 
     public array $datos = [];
     public array $data = [];
-
     public array $puertas = [];
+
     public int $puertaActiva = 0;
+
+    public bool $conSobreluz = false;
+    public float $altoSobreluz = 30;
+
 
     public function mount()
     {
         $this->procesarPerfiles();
 
-        // 👉 cargar desde sesión si existe
+        // Cargar desde sesión si existe
         if (session()->has('puertas')) {
+
             $this->puertas = session('puertas');
+
             $this->puertaActiva = 0;
+
             $this->cargarPuertaActiva();
+
         } else {
-            $this->puertas = [array_merge(['nombre' => 'P - 1'], $this->snapshotPuerta())];
+
+            $this->puertas = [
+                array_merge(
+                    ['nombre' => 'P - 1'],
+                    $this->snapshotPuerta()
+                )
+            ];
+
             $this->puertaActiva = 0;
+
             $this->recalcular();
         }
     }
+
+
     public function eliminarPuerta(int $index): void
     {
         if (count($this->puertas) <= 1) {
-            return; // siempre debe quedar una
+            return;
         }
 
         unset($this->puertas[$index]);
+
         $this->puertas = array_values($this->puertas);
 
         if ($this->puertaActiva >= count($this->puertas)) {
@@ -52,9 +81,12 @@ new class extends Component {
         }
 
         $this->cargarPuertaActiva();
+
         session()->put('puertas', $this->puertas);
+
         $this->dispatch('delete', 'Vista eliminada con exito');
     }
+
 
     private function snapshotPuerta(): array
     {
@@ -62,11 +94,13 @@ new class extends Component {
             'material' => $this->material,
             'anchoTotal' => $this->anchoTotal,
             'altoTotal' => $this->altoTotal,
+            'color' => $this->color,
             'conSobreluz' => $this->conSobreluz,
             'altoSobreluz' => $this->altoSobreluz,
             'datos' => $this->datos,
         ];
     }
+
 
     private function guardarPuertaActual(): void
     {
@@ -74,10 +108,14 @@ new class extends Component {
             return;
         }
 
-        $this->puertas[$this->puertaActiva] = array_merge(['nombre' => $this->puertas[$this->puertaActiva]['nombre']], $this->snapshotPuerta());
+        $this->puertas[$this->puertaActiva] = array_merge(
+            ['nombre' => $this->puertas[$this->puertaActiva]['nombre']],
+            $this->snapshotPuerta()
+        );
 
         session()->put('puertas', $this->puertas);
     }
+
 
     private function cargarPuerta(int $i): void
     {
@@ -86,16 +124,22 @@ new class extends Component {
         $this->material = $p['material'];
         $this->anchoTotal = $p['anchoTotal'];
         $this->altoTotal = $p['altoTotal'];
-        $this->color = $p['color'];
+        $this->color = $p['color'] ?? 'negro';
 
         $this->recalcular();
     }
+
+
     public function cambiarPuerta(int $i): void
     {
         $this->guardarPuertaActual();
+
         $this->puertaActiva = $i;
+
         $this->cargarPuertaActiva();
     }
+
+
     private function cargarPuertaActiva(): void
     {
         if (!isset($this->puertas[$this->puertaActiva])) {
@@ -107,10 +151,16 @@ new class extends Component {
         $this->material = $p['material'];
         $this->anchoTotal = $p['anchoTotal'];
         $this->altoTotal = $p['altoTotal'];
+        $this->color = $p['color'] ?? 'negro';
+
         $this->conSobreluz = $p['conSobreluz'] ?? false;
         $this->altoSobreluz = $p['altoSobreluz'] ?? 30;
+
         $this->datos = $p['datos'] ?? [];
+
+        $this->recalcular();
     }
+
 
     public function agregarPuerta(): void
     {
@@ -120,56 +170,105 @@ new class extends Component {
         $this->anchoTotal = 90;
         $this->altoTotal = 220;
         $this->color = 'negro';
+
+        $this->conSobreluz = false;
+        $this->altoSobreluz = 30;
+
         $this->recalcular();
 
-        $this->puertas[] = array_merge(['nombre' => 'P - ' . (count($this->puertas) + 1)], $this->snapshotPuerta());
+        $this->puertas[] = array_merge(
+            ['nombre' => 'P - ' . (count($this->puertas) + 1)],
+            $this->snapshotPuerta()
+        );
 
         $this->puertaActiva = count($this->puertas) - 1;
+
         $this->dispatch('correcto', 'Vista agregada con exito');
     }
 
+
     private function resetPuertas(): void
     {
-        $this->puertas = [['nombre' => 'P - 1']];
+        $this->puertas = [
+            ['nombre' => 'P - 1']
+        ];
 
         $this->puertaActiva = 0;
 
         $this->material = 7852;
+
         $this->anchoTotal = 90;
         $this->altoTotal = 220;
+
         $this->color = 'negro';
+
+        $this->conSobreluz = false;
+        $this->altoSobreluz = 30;
+
         $this->datos = [];
 
         $this->recalcular();
     }
+
 
     public function updated($prop)
     {
         $this->guardarPuertaActual();
 
         session()->put('puertas', $this->puertas);
-        if (in_array($prop, ['material', 'anchoTotal', 'altoTotal', 'conSobreluz', 'altoSobreluz'])) {
+
+        if (
+            in_array($prop, [
+                'material',
+                'anchoTotal',
+                'altoTotal',
+                'conSobreluz',
+                'altoSobreluz'
+            ])
+        ) {
+
             $this->recalcular();
+
             $this->guardarPuertaActual();
         }
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | MARCO
+    |--------------------------------------------------------------------------
+    */
+
     private function calcularMarco(float $perfil, int $codigo): void
     {
         $this->datos["{$codigo} - Lados"] = [
-            'medida' => $this->altoTotal,
+            'medida' => $this->altoCalculo,
             'cantidad' => 2,
         ];
 
         $this->datos["{$codigo} - Arriba"] = [
-            'medida' => $this->anchoTotal - $perfil * 2,
+            'medida' => $this->anchoCalculo - $perfil * 2,
             'cantidad' => $this->conSobreluz ? 2 : 1,
         ];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HOJA
+    |--------------------------------------------------------------------------
+    */
+
     private function calcularHoja(float $perfil): void
     {
-        $altoHoja = $this->conSobreluz ? $this->altoTotal - $this->altoSobreluz : $this->altoTotal;
+        $altoHoja = $this->conSobreluz
+            ? $this->altoCalculo - $this->altoSobreluz
+            : $this->altoCalculo;
 
-        $anchoHoja = $this->anchoTotal - $perfil * 2 - $this->luzLados;
+        $anchoHoja = $this->anchoCalculo
+            - $perfil * 2
+            - $this->luzLados;
 
         $this->datos['5414 - Arriba y Abajo'] = [
             'medida' => $anchoHoja - $this->cuadrado * 2,
@@ -177,7 +276,10 @@ new class extends Component {
         ];
 
         $this->datos['5414 - Lados'] = [
-            'medida' => $altoHoja - $this->luzArriba - $this->luzAbajo - $perfil,
+            'medida' => $altoHoja
+                - $this->luzArriba
+                - $this->luzAbajo
+                - $perfil,
             'cantidad' => 2,
         ];
 
@@ -185,69 +287,152 @@ new class extends Component {
             'medida' => $anchoHoja - $this->cuadrado * 2,
             'cantidad' => 1,
         ];
-
-        // dd([
-        //     $altoHoja,
-        //     $this->altoTotal
-        //     ,$this->altoSobreluz,
-        //     $perfil
-
-        //     ]);
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | VIDRIOS
+    |--------------------------------------------------------------------------
+    */
+
     private function calcularVidrios(float $perfil): void
     {
-        $altoHoja = $this->conSobreluz ? $this->altoTotal - $this->altoSobreluz : $this->altoTotal;
+        $altoHoja = $this->conSobreluz
+            ? $this->altoCalculo - $this->altoSobreluz
+            : $this->altoCalculo;
 
-        $anchoVidrio = $this->anchoTotal - $perfil * 2 - $this->luzLados - $this->cuadrado * 2;
+        $anchoVidrio = $this->anchoCalculo
+            - $perfil * 2
+            - $this->luzLados
+            - $this->cuadrado * 2;
 
         $descuentoLuces = $this->luzArriba + $this->luzAbajo;
+
         $descuentoMarco = $this->cuadrado * 2;
+
         $descuentoCentral = $this->paflon;
 
-        $altoUtil = $altoHoja - $descuentoLuces - $descuentoMarco - $descuentoCentral - $perfil;
+        $altoUtil = $altoHoja
+            - $descuentoLuces
+            - $descuentoMarco
+            - $descuentoCentral
+            - $perfil;
 
         $altoVidrio = $altoUtil / 2;
 
         $this->datos['Vidrio'] = [
-            'medida' => number_format($altoVidrio - 0.5, 2) . ' x ' . number_format($anchoVidrio - 0.5, 2),
+            'medida' => number_format($altoVidrio, 2)
+                . ' x '
+                . number_format($anchoVidrio, 2),
             'cantidad' => 2,
         ];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | SOBRELUZ
+    |--------------------------------------------------------------------------
+    */
+
     private function calcularSobreluz(float $perfil, int $codigo): void
     {
-        // Marco sobreluz
-        $ancho = $this->anchoTotal - $perfil * 2;
+        // Ancho total ya tiene aplicado el -0.5 cm inicial
+        $ancho = $this->anchoCalculo - $perfil * 2;
 
-        // $this->datos["{$codigo} - Sobreluz"] = [
-        //     'medida' => $ancho,
-        //     'cantidad' => 1,
-        // ];
-
+        // Alto de vidrio de sobreluz
         $altoVidrio = $this->altoSobreluz - $perfil - 0.5;
 
         $this->datos['Vidrio Sobreluz'] = [
-            'medida' => number_format($altoVidrio, 2) . ' x ' . number_format($ancho - 0.5, 2),
+            'medida' => number_format($altoVidrio, 2)
+                . ' x '
+                . number_format($ancho, 2),
             'cantidad' => 1,
         ];
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | RECALCULAR TODO
+    |--------------------------------------------------------------------------
+    */
 
     private function recalcular(): void
     {
         $this->datos = [];
 
-        $perfil = $this->material == 7852 ? $this->tubo : $this->canal;
+        /*
+        |--------------------------------------------------------------------------
+        | DESCUENTO INICIAL
+        |--------------------------------------------------------------------------
+        |
+        | El usuario ingresa, por ejemplo:
+        |
+        | ANCHO = 90
+        | ALTO  = 220
+        |
+        | Para todos los cálculos se utilizará:
+        |
+        | ANCHO = 89.5
+        | ALTO  = 219.5
+        |
+        | Las medidas originales NO se modifican.
+        |
+        */
+
+        $this->anchoCalculo = $this->anchoTotal - 0.5;
+        $this->altoCalculo = $this->altoTotal - 0.5;
+
+
+        $perfil = $this->material == 7852
+            ? $this->tubo
+            : $this->canal;
+
         $codigo = $this->material;
 
-        $this->calcularMarco($perfil, $codigo);
-        $this->calcularHoja($perfil);
-        $this->calcularVidrios($perfil);
 
+        // MARCO
+        $this->calcularMarco(
+            $perfil,
+            $codigo
+        );
+
+
+        // HOJA
+        $this->calcularHoja(
+            $perfil
+        );
+
+
+        // VIDRIOS
+        $this->calcularVidrios(
+            $perfil
+        );
+
+
+        // SOBRELUZ
         if ($this->conSobreluz) {
-            $this->calcularSobreluz($perfil, $codigo);
+
+            $this->calcularSobreluz(
+                $perfil,
+                $codigo
+            );
         }
 
+
+        // ACCESORIOS
         $this->calcularAccesorios();
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ACCESORIOS
+    |--------------------------------------------------------------------------
+    */
+
     private function calcularAccesorios(): void
     {
         $this->datos['Bisagras'] = [
@@ -261,40 +446,75 @@ new class extends Component {
         ];
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | EXCEL
+    |--------------------------------------------------------------------------
+    */
+
     public function procesarPerfiles()
     {
         $ruta = public_path('datos.xlsx');
+
         if (!file_exists($ruta)) {
             return;
         }
 
-        $this->data = collect(Excel::toArray([], $ruta)[0])
+        $this->data = collect(
+            Excel::toArray([], $ruta)[0]
+        )
             ->pluck(0)
             ->filter()
             ->values()
             ->toArray();
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | IMPRIMIR
+    |--------------------------------------------------------------------------
+    */
+
     public function imprimirTodo()
     {
         $this->guardarPuertaActual();
 
-        session()->put('puertas', $this->puertas);
-        $datos = session('puertas', []);
-        // dd($datos);
-        $this->dispatch('imprimir-puertas');
+        session()->put(
+            'puertas',
+            $this->puertas
+        );
+
+        $datos = session(
+            'puertas',
+            []
+        );
+
+        $this->dispatch(
+            'imprimir-puertas'
+        );
     }
-    protected $listeners = ['limpiar-puertas'];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | LIMPIAR PUERTAS
+    |--------------------------------------------------------------------------
+    */
+
+    protected $listeners = [
+        'limpiar-puertas'
+    ];
+
 
     public function limpiarPuertas(): void
     {
         session()->forget('puertas');
+
         $this->resetPuertas();
     }
-
-    public bool $conSobreluz = false;
-    public float $altoSobreluz = 30;
 };
-
 ?>
 
 <div class="p-2 md:p-6 max-w-5xl mx-auto mb-[30px] font-sans">
@@ -304,6 +524,10 @@ new class extends Component {
             <img src="{{ asset('img/tape.gif') }}" alt="" srcset="" class="rounded-full w-40 h-40">
         </div>
     </div>
+
+    <p class="text-2xl text-slate-500 font-extrabold tracking-widest mb-6">
+        {{ $puertas[$puertaActiva]['nombre'] ?? '—' }}
+    </p>
 
     <div
         class="lg:flex grid grid-cols-1 lg:gap-2 justify-between items-center gap-1 mb-6 px-2 border-b border-gray-200 overflow-x-auto">
@@ -422,93 +646,90 @@ new class extends Component {
     <div class="lg:flex gap-6">
 
         {{-- PLANO TÉCNICO --}}
-<div class="w-full lg:w-1/2 bg-gray-200 border rounded-xl p-6 flex flex-col items-center">
+        <div class="w-full lg:w-1/2 bg-gray-200 border rounded-xl p-6 flex flex-col items-center">
 
-    {{-- TÍTULO --}}
-    <div class="mb-6 text-center">
-        <div class="text-[11px] tracking-[0.2em] text-gray-600 font-mono">
-            PLANO TÉCNICO
-        </div>
-        <div class="text-sm font-semibold text-gray-800">
-            Serie {{ $material }}
-        </div>
-    </div>
+            {{-- TÍTULO --}}
+            <div class="mb-6 text-center">
+                <div class="text-[11px] tracking-[0.2em] text-gray-600 font-mono">
+                    PLANO TÉCNICO
+                </div>
+                <div class="text-sm font-semibold text-gray-800">
+                    Serie {{ $material }}
+                </div>
+            </div>
 
-    {{-- CONTENEDOR --}}
-    <div
-        class="relative flex border-b-0  flex-col w-[220px] lg:w-[280px]
+            {{-- CONTENEDOR --}}
+            <div class="relative flex border-b-0  flex-col w-[220px] lg:w-[280px]
         {{ $conSobreluz ? 'h-[500px] lg:h-[600px]' : 'h-[450px] lg:h-[520px]' }}
         border-[5px] border-black bg-white"
-
-        style="
+                style="
             border-color: {{ $color === 'negro' ? '#111' : '#444' }};
             background-image:
                 linear-gradient(to right, rgba(0,0,0,0.05) 1px, transparent 1px),
                 linear-gradient(to bottom, rgba(0,0,0,0.05) 1px, transparent 1px);
             background-size: 20px 20px;
-        "
-    >
+        ">
 
-        {{-- COTA ALTO --}}
-        <div class="absolute -left-16 top-0 h-full flex flex-col items-center justify-between text-[10px] font-mono text-black">
+                {{-- COTA ALTO --}}
+                <div
+                    class="absolute -left-16 top-0 h-full flex flex-col items-center justify-between text-[10px] font-mono text-black">
 
-            <span>{{ $altoTotal }} cm</span>
+                    <span>{{ $altoTotal }} cm</span>
 
-            <div class="relative flex-1 w-px bg-black">
-                <span class="absolute -top-1 left-[-3px] border-l-[4px] border-r-[4px] border-b-[6px] border-transparent border-b-black"></span>
-                <span class="absolute -bottom-1 left-[-3px] border-l-[4px] border-r-[4px] border-t-[6px] border-transparent border-t-black"></span>
-            </div>
-
-            <span class="tracking-widest">ALTO</span>
-        </div>
-
-        {{-- SOBRELUZ --}}
-        @if ($conSobreluz && isset($datos['Vidrio Sobreluz']))
-            <div
-                class="relative flex items-center justify-center border-b-[4px] border-black"
-                style="
-                    height: {{ max(80, $altoSobreluz) }}px;
-                    background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);
-                "
-            >
-
-                <div class="text-center font-mono">
-                    <div class="text-[10px] tracking-wider text-gray-700">
-                        SOBRELUZ
+                    <div class="relative flex-1 w-px bg-black">
+                        <span
+                            class="absolute -top-1 left-[-3px] border-l-[4px] border-r-[4px] border-b-[6px] border-transparent border-b-black"></span>
+                        <span
+                            class="absolute -bottom-1 left-[-3px] border-l-[4px] border-r-[4px] border-t-[6px] border-transparent border-t-black"></span>
                     </div>
-                    <div class="text-[11px] text-black">
-                        {{ $datos['Vidrio Sobreluz']['medida'] }}
-                    </div>
+
+                    <span class="tracking-widest">ALTO</span>
                 </div>
 
-                {{-- brillo vidrio --}}
-                <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
+                {{-- SOBRELUZ --}}
+                @if ($conSobreluz && isset($datos['Vidrio Sobreluz']))
+                    <div class="relative flex items-center justify-center border-b-[4px] border-black"
+                        style="
+                    height: {{ max(80, $altoSobreluz) }}px;
+                    background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);
+                ">
 
-                <span class="absolute right-2 top-1 text-[9px] text-black font-mono">
-                    {{ $altoSobreluz }} cm
-                </span>
-            </div>
-        @endif
+                        <div class="text-center font-mono">
+                            <div class="text-[10px] tracking-wider text-gray-700">
+                                SOBRELUZ
+                            </div>
+                            <div class="text-[11px] text-black">
+                                {{ $datos['Vidrio Sobreluz']['medida'] }}
+                            </div>
+                        </div>
 
-        {{-- CUERPO --}}
-        <div class="flex flex-col flex-1 justify-between p-[2px]">
+                        {{-- brillo vidrio --}}
+                        <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
 
-            {{-- VIDRIO SUPERIOR --}}
-            <div class="relative flex flex-col items-center justify-center flex-1 border-[5px] border-b-0 border-black"
-                style="background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);">
+                        <span class="absolute right-2 top-1 text-[9px] text-black font-mono">
+                            {{ $altoSobreluz }} cm
+                        </span>
+                    </div>
+                @endif
 
-                <span class="text-[10px] font-mono text-black tracking-wider">VIDRIO</span>
-                <span class="text-[11px] font-mono text-black">
-                    {{ $datos['Vidrio']['medida'] ?? '—' }}
-                </span>
+                {{-- CUERPO --}}
+                <div class="flex flex-col flex-1 justify-between p-[2px]">
 
-                <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
-            </div>
+                    {{-- VIDRIO SUPERIOR --}}
+                    <div class="relative flex flex-col items-center justify-center flex-1 border-[5px] border-b-0 border-black"
+                        style="background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);">
 
-            {{-- TRAVESAÑO --}}
-            <div
-                class="relative flex items-center justify-between h-[38px] px-3 text-[10px] text-white border-y border-black"
-                style="
+                        <span class="text-[10px] font-mono text-black tracking-wider">VIDRIO</span>
+                        <span class="text-[11px] font-mono text-black">
+                            {{ $datos['Vidrio']['medida'] ?? '—' }}
+                        </span>
+
+                        <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
+                    </div>
+
+                    {{-- TRAVESAÑO --}}
+                    <div class="relative flex items-center justify-between h-[38px] px-3 text-[10px] text-white border-y border-black"
+                        style="
                     background: repeating-linear-gradient(
                         45deg,
                         #2f2f2f,
@@ -516,59 +737,62 @@ new class extends Component {
                         #444 2px,
                         #444 6px
                     );
-                "
-            >
-                <span class="font-mono tracking-wider">REF 5227</span>
+                ">
+                        <span class="font-mono tracking-wider">REF 5227</span>
 
-                <div class="flex items-center gap-2">
-                    <span class="font-mono">
-                        {{ $datos['5227']['medida'] ?? '—' }} cm
-                    </span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-mono">
+                                {{ $datos['5227']['medida'] ?? '—' }} cm
+                            </span>
 
-                    {{-- perilla --}}
-                    <div class="w-5 h-5 flex items-center justify-center rounded-full border border-black bg-gray-300">
-                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            {{-- perilla --}}
+                            <div
+                                class="w-5 h-5 flex items-center justify-center rounded-full border border-black bg-gray-300">
+                                <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- BISAGRAS --}}
+                    <div class="absolute left-[-6px] top-0 h-full flex flex-col justify-around py-12">
+                        @for ($i = 0; $i < 3; $i++)
+                            <div class="w-2 h-8 bg-gray-500 border border-black relative">
+                                <div class="absolute inset-y-0 left-1/2 w-[1px] bg-black"></div>
+                            </div>
+                        @endfor
+                    </div>
+
+                    {{-- VIDRIO INFERIOR --}}
+                    <div class="relative flex flex-col items-center justify-center flex-1 border-[5px] border-t-0 border-black"
+                        style="background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);">
+
+                        <span class="text-[10px] font-mono text-black tracking-wider">VIDRIO</span>
+                        <span class="text-[11px] font-mono text-black">
+                            {{ $datos['Vidrio']['medida'] ?? '—' }}
+                        </span>
+
+                        <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
                     </div>
                 </div>
-            </div>
 
-            {{-- BISAGRAS --}}
-            <div class="absolute left-[-6px] top-0 h-full flex flex-col justify-around py-12">
-                @for ($i = 0; $i < 3; $i++)
-                    <div class="w-2 h-8 bg-gray-500 border border-black relative">
-                        <div class="absolute inset-y-0 left-1/2 w-[1px] bg-black"></div>
+                {{-- COTA ANCHO --}}
+                <div
+                    class="absolute -bottom-12 left-0 w-full flex items-center justify-between text-[10px] font-mono text-black">
+
+                    <span>{{ $anchoTotal }} cm</span>
+
+                    <div class="relative flex-1 h-px mx-2 bg-black">
+                        <span
+                            class="absolute left-0 top-[-3px] border-t-[4px] border-b-[4px] border-r-[6px] border-transparent border-r-black"></span>
+                        <span
+                            class="absolute right-0 top-[-3px] border-t-[4px] border-b-[4px] border-l-[6px] border-transparent border-l-black"></span>
                     </div>
-                @endfor
-            </div>
 
-            {{-- VIDRIO INFERIOR --}}
-            <div class="relative flex flex-col items-center justify-center flex-1 border-[5px] border-t-0 border-black"
-                style="background: linear-gradient(135deg,#e0f2fe 0%,#7dd3fc55 100%);">
+                    <span class="tracking-widest">ANCHO</span>
+                </div>
 
-                <span class="text-[10px] font-mono text-black tracking-wider">VIDRIO</span>
-                <span class="text-[11px] font-mono text-black">
-                    {{ $datos['Vidrio']['medida'] ?? '—' }}
-                </span>
-
-                <div class="absolute top-0 left-0 w-full h-1/3 bg-white/20"></div>
             </div>
         </div>
-
-        {{-- COTA ANCHO --}}
-        <div class="absolute -bottom-12 left-0 w-full flex items-center justify-between text-[10px] font-mono text-black">
-
-            <span>{{ $anchoTotal }} cm</span>
-
-            <div class="relative flex-1 h-px mx-2 bg-black">
-                <span class="absolute left-0 top-[-3px] border-t-[4px] border-b-[4px] border-r-[6px] border-transparent border-r-black"></span>
-                <span class="absolute right-0 top-[-3px] border-t-[4px] border-b-[4px] border-l-[6px] border-transparent border-l-black"></span>
-            </div>
-
-            <span class="tracking-widest">ANCHO</span>
-        </div>
-
-    </div>
-</div>
 
         {{-- TABLA ACCESORIOS --}}
         <div

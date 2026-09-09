@@ -34,18 +34,30 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
 
     <div class="max-w-7xl mx-auto text-center mt-6 md:mt-0">
         {{-- HEADER --}}
-        <header class="mb-12 transition-all duration-500">
-            <h1 class="text-3xl md:text-5xl font-black text-[#2e3e4e] tracking-widest uppercase border-b-4 border-gray-300 inline-block pb-2 px-4">
+        <header class="mb-4 transition-all duration-500">
+            <h1
+                class="text-2xl md:text-3xl font-black text-[#2e3e4e] tracking-widest uppercase border-b-4 border-gray-300 inline-block pb-2 px-4">
                 @if (!$mamparaSeleccionada)
                     MAMPARAS
                 @else
                     {{ $mamparaSeleccionada }}
                 @endif
             </h1>
+            @if ($this->mamparaSeleccionada)
+                <div class="flex flex-col items-center gap-6 mt-4 animate-fade-in">
+                    <button wire:click="resetear"
+                        class="group flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50 text-gray-500 hover:text-amber-700 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md">
+                        <i class="fa-solid fa-rotate-left text-xs transition-transform group-hover:-rotate-180"></i>
+                        <span class="text-xs font-semibold">
+                            Cambiar
+                        </span>
+                    </button>
+                </div>
+            @endif
 
             @if (!$mamparaSeleccionada)
                 <p class="text-gray-500 mt-4 text-sm md:text-base font-medium tracking-wide">
-                    Seleccione el tipo de sistema de mampara
+                    Seleccione el tipo de sistema
                 </p>
             @endif
         </header>
@@ -58,11 +70,13 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
                     [
                         'id' => 'Sistema Corredizo',
                         'icon' => 'fa-arrows-left-right',
-                        'desc' => 'Hojas deslizantes con rodamientos tandem de alta capacidad.',
+                        'desc' => 'Hojas deslizantes con rodamientos de alta capacidad.',
                         'bgIcon' => 'bg-indigo-50 text-indigo-600',
                         'btnClass' => 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-600/20',
                     ],
-                    [
+                ];
+            @endphp
+            {{-- [
                         'id' => 'Sistema Batiente / Pivot',
                         'icon' => 'fa-door-open',
                         'desc' => 'Apertura pivotante o batiente con frenos hidráulicos de piso.',
@@ -75,17 +89,16 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
                         'desc' => 'División fija minimalista con perfiles en U o conectores espiga.',
                         'bgIcon' => 'bg-pink-50 text-pink-600',
                         'btnClass' => 'bg-pink-500 hover:bg-pink-600 shadow-pink-500/20',
-                    ],
-                ];
-            @endphp
-
+                    ], --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto px-4 mt-8">
                 @foreach ($mamparas as $s)
-                    <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-[0_10px_25px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_15px_35px_rgba(0,0,0,0.05)] hover:-translate-y-1 text-left flex flex-col justify-between min-h-[250px]">
-                        
+                    <div wire:click="seleccionar('{{ $s['id'] }}')"
+                        class="bg-white border border-gray-100 cursor-pointer rounded-2xl p-8 shadow-[0_10px_25px_rgba(0,0,0,0.02)] transition-all duration-300 hover:shadow-[0_15px_35px_rgba(0,0,0,0.05)] hover:-translate-y-1 text-left flex flex-col justify-between min-h-[250px]">
+
                         <div>
                             {{-- Icono representativo --}}
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 {{ $s['bgIcon'] }}">
+                            <div
+                                class="w-14 h-14 rounded-2xl flex items-center justify-center mb-6 {{ $s['bgIcon'] }}">
                                 <i class="fa-solid {{ $s['icon'] }} text-xl"></i>
                             </div>
 
@@ -100,10 +113,11 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
 
                         {{-- Botón abrir sistema --}}
                         <div>
-                            <button wire:click="seleccionar('{{ $s['id'] }}')" 
+                            <button wire:click="seleccionar('{{ $s['id'] }}')"
                                 class="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-lg transition-all duration-300 transform active:scale-95 group {{ $s['btnClass'] }}">
                                 <span>Abrir sistema</span>
-                                <i class="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-1"></i>
+                                <i
+                                    class="fa-solid fa-arrow-right text-[10px] transition-transform group-hover:translate-x-1"></i>
                             </button>
                         </div>
 
@@ -111,9 +125,9 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
                 @endforeach
             </div>
 
-        {{-- INYECCIÓN DINÁMICA DE VISTAS SEGÚN EL SISTEMA --}}
+            {{-- INYECCIÓN DINÁMICA DE VISTAS SEGÚN EL SISTEMA --}}
         @elseif ($mamparaSeleccionada === 'Sistema Corredizo')
-            <livewire:mamparas.sistema-corredizo />
+            <livewire:mamparas.corredizo />
         @elseif ($mamparaSeleccionada === 'Sistema Batiente / Pivot')
             <livewire:mamparas.sistema-batiente />
         @elseif ($mamparaSeleccionada === 'Paño Fijo / Templado')
@@ -121,17 +135,21 @@ new #[Layout('layouts.app')] #[Title('Mamparas')] class extends Component {
         @else
             {{-- Módulo de contingencia por si se añade un sistema no registrado --}}
             <div class="py-12 flex items-center justify-center px-4">
-                <div class="relative max-w-md w-full bg-white rounded-3xl shadow-sm border border-gray-100 p-10 text-center">
+                <div
+                    class="relative max-w-md w-full bg-white rounded-3xl shadow-sm border border-gray-100 p-10 text-center">
                     <div class="mb-6">
                         <i class="fa-solid fa-screwdriver-wrench text-5xl text-gray-300"></i>
                     </div>
                     <h1 class="text-2xl font-black text-gray-800 mb-2">Módulo en Diseño</h1>
-                    <p class="text-gray-400 text-sm mb-6">Cargando las librerías de perfiles y accesorios para este tipo de mampara.</p>
-                    <button wire:click="resetear" class="px-5 py-2 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 uppercase tracking-wider">
+                    <p class="text-gray-400 text-sm mb-6">Cargando las librerías de perfiles y accesorios para este tipo
+                        de mampara.</p>
+                    <button wire:click="resetear"
+                        class="px-5 py-2 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-gray-800 uppercase tracking-wider">
                         Regresar
                     </button>
                 </div>
             </div>
         @endif
     </div>
+
 </div>

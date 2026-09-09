@@ -2,6 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
 <head>
+    <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
     <title>MediPro - {{ $title ?? 'MediPro' }}</title>
 
     <script src="https://kit.fontawesome.com/a22afade38.js" crossorigin="anonymous"></script>
@@ -123,6 +125,51 @@
             display: none !important;
         }
     </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+
+    --ink:#000000;
+    --ink-dim:#9FB3D9;
+    --amber:#FFB238;
+    --teal:#5EEAD4;
+    --glass:rgba(120,180,255,0.14);
+  }
+  body{ font-family:'Inter', sans-serif; background:var(--blue-deep); }
+  .font-display{ font-family:'Space Grotesk', sans-serif; }
+  .font-mono{ font-family:'JetBrains Mono', monospace; }
+
+  .grid-bg{
+    background-image:
+      linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px),
+      linear-gradient(rgba(255,255,255,0.09) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.09) 1px, transparent 1px);
+    background-size: 16px 16px, 16px 16px, 80px 80px, 80px 80px;
+    background-position: -1px -1px;
+  }
+
+  input[type=range]{ -webkit-appearance:none; appearance:none; height:4px; border-radius:2px; background:var(--blue-line); }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:9999px;
+    background:var(--amber); border:2px solid #1a1a1a1a; cursor:pointer; box-shadow:0 0 0 3px rgba(255,178,56,0.18);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:16px; height:16px; border-radius:9999px; background:var(--amber); border:none; cursor:pointer;
+  }
+  select, .seg-btn{ transition: all .15s ease; }
+  .seg-btn.active{ background:var(--amber); color:#0A1F44; font-weight:600; }
+  .toggle-dot{ transition: transform .15s ease; }
+  input:checked ~ .toggle-track{ background:var(--amber); }
+  input:checked ~ .toggle-track .toggle-dot{ transform:translateX(18px); background:#0A1F44; }
+
+  .leader-label{ font-family:'Inter', sans-serif; }
+  .fade-in{ animation: fadeIn .4s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);} }
+</style>
 
     <style>
         @media print {

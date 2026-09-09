@@ -7,9 +7,9 @@ use Livewire\Attributes\Title;
 new #[Layout('layouts.app')] #[Title('Inicio')] class extends Component {};
 ?>
 
-<div class=" h-auto flex items-center justify-center text-gray-800">
+<div class="overflow-hidden h-screen flex items-center justify-center text-gray-800">
 
-    <div class="absolute inset-0 overflow-auto -z-10">
+    <div class="absolute inset-0 overflow-hidden -z-10">
         <div class="bubble w-[500px] h-[500px] bg-blue-300/40 top-[-10%] left-[-10%]"></div>
         <div class="bubble w-[400px] h-[400px] bg-purple-300/30 bottom-[5%] right-[-5%]"
             style="animation-duration: 30s; animation-delay: -5s;"></div>

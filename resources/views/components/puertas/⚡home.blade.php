@@ -49,7 +49,7 @@ class extends Component {
                             class="group flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 hover:border-amber-300 hover:bg-amber-50 text-gray-500 hover:text-amber-700 rounded-lg transition-all duration-300 shadow-sm hover:shadow-md">
                             <i class="fa-solid fa-rotate-left text-xs transition-transform group-hover:-rotate-180"></i>
                             <span class="text-xs font-semibold">
-                                Cambiar
+                                Cambiar Sistema
                             </span>
                         </button>
 
