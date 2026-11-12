@@ -251,5 +251,11 @@ new #[Layout('layouts.app')] #[Title('Ventanas')] class extends Component {
             </div>
         @endif
     </div>
-
+    <div wire:loading class="fixed inset-0 z-50 bg-gray-500/50">
+        <div class="absolute inset-0 flex items-center justify-center">
+            <img src="{{ asset('img/tape.gif') }}" alt="" srcset="" class="rounded-full w-40 h-40">
+        </div>
+    </div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
 </div>

@@ -77,14 +77,15 @@ class extends Component {
                         'color' => 'neutral',
                         'desc' => 'Perfiles reforzados y alta durabilidad.',
                     ],
-                ];
-            @endphp
-            {{-- [
+                    [
                         'id' => 'Puerta - Diseño Personalizable',
                         'icon' => 'fa-sliders',
                         'color' => 'info',
                         'desc' => 'Configuración estética y técnica a medida.',
                     ],
+                ];
+            @endphp
+            {{--
 
                     [
                         'id' => 'Puerta Corrediza - 1 Hoja',
@@ -234,4 +235,6 @@ class extends Component {
             <img src="{{ asset('img/tape.gif') }}" alt="" srcset="" class="rounded-full w-40 h-40">
         </div>
     </div>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/izitoast/dist/css/iziToast.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/izitoast/dist/js/iziToast.min.js"></script>
 </div>

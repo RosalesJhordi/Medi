@@ -696,678 +696,681 @@ new class extends Component {
 };
 ?>
 
-<div class="nova-plano p-4 lg:p-6">
+@php
+    $tarjeta = 'rounded-2xl border border-slate-200 bg-white shadow-sm';
+    $inputClase = 'w-full rounded-xl border border-slate-300 bg-white pl-3 pr-10 py-2.5 text-sm font-semibold text-slate-900 transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none';
+    $opciones = [
+        ['mosquitero', 'Mosquitero', 'fa-border-none'],
+        ['mostrarCotas', 'Cotas generales', 'fa-ruler-combined'],
+        ['mostrarCotaHoja', 'Cota por hoja', 'fa-arrows-left-right'],
+        ['mostrarEtiquetas', 'Etiquetas de partes', 'fa-tags'],
+    ];
+    $pl = $this->plano;
+@endphp
+
+<div class="mx-auto max-w-7xl p-3 font-sans text-slate-800 md:p-6">
 
     <style>
-        .nova-plano {
-            --paper: #FAF9F6;
-            --panel: #FFFFFF;
-            --panel-soft: #F1EEE6;
-            --line: #DCD5C7;
-            --ink: #23282D;
-            --ink-dim: #6B7280;
-            --accent: #B23A2E;
-            --blue-accent: #2C5F8A;
-            --glass: rgba(44, 95, 138, 0.06);
-            --danger: #C0392B;
-
-            background: var(--paper);
-            color: var(--ink);
-            border-radius: 1rem;
-            font-family: 'Inter', system-ui, sans-serif;
-        }
-
-        .nova-plano .font-display { font-family: 'Space Grotesk', 'Inter', sans-serif; }
-        .nova-plano .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
-
-        .nova-plano .grid-bg {
-            background-image:
-                linear-gradient(rgba(35, 40, 45, 0.06) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(35, 40, 45, 0.06) 1px, transparent 1px);
-            background-size: 22px 22px;
-            position: relative;
-        }
-
-        .nova-plano .corner-tl, .nova-plano .corner-tr,
-        .nova-plano .corner-bl, .nova-plano .corner-br {
-            content: "";
-            position: absolute;
-            width: 14px;
-            height: 14px;
-            border: 1.5px solid var(--accent);
-            opacity: 0.55;
-        }
-
-        .nova-plano .corner-tl { top: 8px; left: 8px; border-right: none; border-bottom: none; }
-        .nova-plano .corner-tr { top: 8px; right: 8px; border-left: none; border-bottom: none; }
-        .nova-plano .corner-bl { bottom: 8px; left: 8px; border-right: none; border-top: none; }
-        .nova-plano .corner-br { bottom: 8px; right: 8px; border-left: none; border-top: none; }
-
-        .nova-plano .seg-btn { background: transparent; color: var(--ink-dim); transition: all .15s ease; }
-        .nova-plano .seg-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
-
-        .nova-plano input[type="range"] { -webkit-appearance: none; height: 4px; border-radius: 999px; background: var(--line); }
-        .nova-plano input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 14px; height: 14px; border-radius: 999px;
-            background: var(--accent); cursor: pointer; border: 2px solid var(--paper);
-            box-shadow: 0 0 0 1px var(--accent);
-        }
-
-        .nova-plano table.corte-vidrios td,
-        .nova-plano table.corte-vidrios th { padding: 4px 6px; }
-
-        .nova-plano .control-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; }
-
-        .nova-plano .plano-svg-text { paint-order: stroke; stroke: var(--paper); stroke-width: 3px; }
+        [x-cloak] { display: none !important; }
     </style>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-    {{-- =====================================================
-         LOADING
-    ====================================================== --}}
-
-    <div wire:loading class="fixed inset-0 z-50 bg-white/70 backdrop-blur-[2px]">
+    {{-- LOADING --}}
+    <div wire:loading class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm">
         <div class="absolute inset-0 flex items-center justify-center">
-            <img src="{{ asset('img/tape.gif') }}" alt="" class="rounded-full w-40 h-40">
+            <img src="{{ asset('img/tape.gif') }}" alt="" class="h-32 w-32 rounded-full shadow-2xl ring-4 ring-white">
         </div>
     </div>
 
-    {{-- =====================================================
-         ACCIONES
-    ====================================================== --}}
-
-    <div class="flex justify-center gap-3 mb-5">
-        <button type="button" wire:click="imprimirTodo"
-            class="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-[var(--line)] bg-[var(--panel)] text-xs font-bold uppercase tracking-wider text-[var(--ink)] hover:border-[var(--accent)] hover:text-[var(--accent)] hover:shadow-sm transition shadow-sm">
-            <i class="fa-solid fa-print"></i>
-            Imprimir plano
-        </button>
-    </div>
-
-    {{-- =====================================================
-         TÍTULO
-    ====================================================== --}}
-
-    <div class="flex items-center justify-center gap-2 mb-4">
-        <p class="font-display text-3xl font-black tracking-tight text-[var(--ink-dim)]">
-            {{ $mamparas[$mamparaActiva]['nombre'] ?? '—' }}
-        </p>
-    </div>
-
-    {{-- =====================================================
-         TABS
-    ====================================================== --}}
-
-    <div class="flex flex-wrap items-center gap-2 mb-6 pb-3 border-b border-[var(--line)]">
-        @foreach ($mamparas as $index => $v)
-            <div class="relative group" wire:key="mampara-tab-{{ $index }}">
-                <button wire:click="cambiarMampara({{ $index }})"
-                    class="px-5 py-2 text-xs font-bold uppercase tracking-wider rounded-md border transition-all font-mono
-                    {{ $mamparaActiva == $index
-                        ? 'bg-[var(--panel-soft)] border-[var(--accent)] text-[var(--accent)]'
-                        : 'bg-transparent border-[var(--line)] text-[var(--ink-dim)] hover:border-[var(--ink-dim)] hover:text-[var(--ink)]' }}">
-                    <i class="fa-solid fa-door-closed mr-1"></i>
-                    {{ $v['nombre'] }}
-                </button>
-
-                <button wire:click.stop="eliminarMampara({{ $index }})"
-                    class="absolute -top-1.5 -right-1.5 w-4 h-4 text-[9px] bg-[var(--danger)] text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition">
-                    ✕
-                </button>
-            </div>
-        @endforeach
-
-        <button wire:click="agregarMampara"
-            class="px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono text-[var(--blue-accent)] border border-dashed border-[var(--line)] rounded-md hover:border-[var(--blue-accent)] transition">
-            <i class="fa-solid fa-plus-circle mr-1"></i>
-            Nuevo
-        </button>
-
-        <button wire:click="limpiarMamparas"
-            class="px-4 py-2 text-xs font-bold uppercase tracking-wider font-mono text-[var(--danger)]/80 hover:text-[var(--danger)] transition">
-            <i class="fa-solid fa-trash mr-1"></i>
-            Vaciar
-        </button>
-    </div>
-
-    {{-- =====================================================
-         MEDIDAS
-    ====================================================== --}}
-
-    <div class="grid gap-4 mb-5 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
-
-        <div class="flex flex-col gap-1.5">
-            <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                Ancho <span class="text-[var(--blue-accent)]">(cm)</span>
-            </label>
-            <input type="number" step="0.1" min="0" wire:model.lazy="ancho"
-                class="campo-dim w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm font-mono font-medium text-[var(--ink)] transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none">
+    {{-- ENCABEZADO --}}
+    <div class="mb-4 flex flex-wrap items-end justify-between gap-3">
+        <div>
+            <p class="text-[11px] font-bold uppercase tracking-[0.25em] text-indigo-500">Calculadora de mamparas</p>
+            <h1 class="text-3xl font-black tracking-tight text-slate-800">
+                {{ $mamparas[$mamparaActiva]['nombre'] ?? '—' }}
+                <span class="ml-1 text-base font-semibold text-slate-400">Sistema corredizo</span>
+            </h1>
         </div>
 
-        <div class="flex flex-col gap-1.5">
-            <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                Alto <span class="text-[var(--blue-accent)]">(cm)</span>
-            </label>
-            <input type="number" step="0.1" min="0" wire:model.lazy="alto"
-                class="campo-dim w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm font-mono font-medium text-[var(--ink)] transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none">
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-            <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                Sobreluz
-            </label>
-            <label class="campo-dim flex items-center justify-between gap-2 w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 cursor-pointer">
-                <span class="text-sm text-[var(--ink)]">¿Con sobreluz?</span>
-                <span class="relative inline-block w-9 h-5 shrink-0">
-                    <input type="checkbox" wire:model.lazy="conSobreluz" class="sr-only peer">
-                    <span class="absolute inset-0 bg-[var(--line)] rounded-full peer-checked:bg-[var(--accent)] transition"></span>
-                    <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-[18px] shadow transition-transform"></span>
-                </span>
-            </label>
-        </div>
-
-        @if ($conSobreluz)
-            <div class="flex flex-col gap-1.5">
-                <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                    Puente <span class="text-[var(--blue-accent)]">(cm)</span>
-                </label>
-                <input type="number" step="0.1" min="0" wire:model.lazy="puente"
-                    class="campo-dim w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm font-mono font-medium text-[var(--ink)] transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none">
-                <p class="text-[10px] text-[var(--ink-dim)] leading-snug">
-                    Altura de la banda principal (hojas), medida desde abajo. El sobreluz toma lo que sobra del alto:
-                    {{ number_format($alto, 1) }} − {{ number_format($puente, 1) }} = {{ number_format($this->sobreluzAltura, 1) }} cm.
-                </p>
-            </div>
-        @endif
-
-        <div class="flex flex-col gap-1.5">
-            <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                Corredizas
-            </label>
-            <input type="number" min="0" wire:model.lazy="corredizas"
-                class="campo-dim w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm font-mono font-medium text-[var(--ink)] transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none">
-        </div>
-
-        <div class="flex flex-col gap-1.5">
-            <label class="font-mono text-[10px] font-semibold uppercase tracking-[0.15em] text-[var(--ink-dim)]">
-                Fijos
-            </label>
-            <input type="number" min="0" wire:model.lazy="fijos"
-                class="campo-dim w-full rounded-lg border border-[var(--line)] bg-white px-3 py-2.5 text-sm font-mono font-medium text-[var(--ink)] transition focus:border-[var(--accent)] focus:ring-2 focus:ring-[var(--accent)]/20 focus:outline-none">
-        </div>
-
-    </div>
-
-    {{-- =====================================================
-         RESUMEN DE MEDIDAS
-    ====================================================== --}}
-
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-
-        <div class="rounded-xl border border-[var(--line)] bg-white p-4">
-            <div class="font-mono text-[10px] uppercase tracking-wider text-[var(--ink-dim)]">Medida ingresada</div>
-            <div class="mt-1 font-mono text-xl font-bold">
-                {{ number_format($ancho, 1) }} × {{ number_format($alto, 1) }}
-                <span class="text-sm text-slate-500">cm</span>
-            </div>
-        </div>
-
-        <div class="rounded-xl border border-blue-200 bg-blue-50 p-4">
-            <div class="font-mono text-[10px] uppercase tracking-wider text-blue-600">Medida fabricación</div>
-            <div class="mt-1 font-mono text-xl font-bold text-blue-700">
-                {{ number_format($this->anchoFabricacion, 1) }} × {{ number_format($this->altoFabricacion, 1) }}
-                <span class="text-sm">cm</span>
-            </div>
-        </div>
-
-        <div class="rounded-xl border border-red-200 bg-red-50 p-4">
-            <div class="font-mono text-[10px] uppercase tracking-wider text-red-600">Descuento inicial</div>
-            <div class="mt-1 font-mono text-xl font-bold text-red-700">-0.5 × -0.5 cm</div>
-        </div>
-
-    </div>
-
-    {{-- =====================================================
-         BOTÓN PLANO (Alpine puro — no depende de datos del servidor)
-    ====================================================== --}}
-
-    <div x-data="{ mostrarPlano: true }">
-
-        <div class="flex justify-center mb-8">
-            <button type="button" @click="mostrarPlano = !mostrarPlano"
-                class="px-6 py-3 rounded-full bg-[var(--blue-accent)] text-white text-xs sm:text-sm font-bold uppercase tracking-wider shadow-sm hover:opacity-90 transition">
-                <i class="fa-solid fa-ruler-combined mr-2"></i>
-                <span x-text="mostrarPlano ? 'Plano técnico: Sistema Corredizo' : 'Mostrar plano técnico'"></span>
+        <div class="flex flex-wrap items-center gap-2">
+            <button type="button" wire:click="imprimirTodo"
+                class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 transition hover:border-indigo-400 hover:text-indigo-600 active:scale-95">
+                <i class="fa-solid fa-print"></i> Imprimir plano
+            </button>
+            <button type="button" wire:click="agregarMampara"
+                class="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-indigo-200 transition hover:bg-indigo-700 active:scale-95">
+                <i class="fa-solid fa-plus"></i> Nueva mampara
+            </button>
+            <button type="button" wire:click="limpiarMamparas" wire:confirm="¿Vaciar todas las mamparas?"
+                class="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-4 py-2.5 text-xs font-bold text-red-600 transition hover:bg-red-50 active:scale-95">
+                <i class="fa-solid fa-trash"></i> Vaciar
             </button>
         </div>
-
-        {{-- =====================================================
-             PLANO
-        ====================================================== --}}
-
-        <div x-show="mostrarPlano" x-cloak>
-
-            <header class="border-b border-[var(--line)] bg-[var(--panel)] rounded-t-xl">
-                <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between flex-wrap gap-3">
-                    <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-md border border-[var(--accent)]/50 flex items-center justify-center font-mono text-[var(--accent)] text-sm font-semibold">
-                            C
-                        </div>
-                        <div>
-                            <h1 class="font-display text-lg sm:text-xl font-semibold tracking-tight">
-                                Plano de Mampara
-                                <span class="text-[var(--accent)]">— Sistema Corredizo</span>
-                            </h1>
-                            <p class="text-xs text-[var(--ink-dim)] font-mono">
-                                Corrediza aluminio · elevación frontal · cotas en cm / mm
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="text-xs font-mono text-[var(--ink-dim)] text-right leading-tight">
-                        <div>Fecha {{ $this->plano['fecha'] }}</div>
-                        <div>Escala <span class="text-[var(--blue-accent)]">1:{{ $this->plano['escala'] }}</span></div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="max-w-[1400px] mx-auto px-6 py-6 grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-6">
-
-                {{-- =================================================
-                     CONTROLES
-                ================================================== --}}
-
-                <aside class="bg-[var(--panel)] border border-[var(--line)] rounded-xl p-5 space-y-6 h-fit shadow-sm">
-
-                    {{-- COMPOSICIÓN --}}
-
-                    <div>
-                        <h2 class="font-display text-sm font-semibold text-[var(--ink-dim)] uppercase tracking-wider mb-3">
-                            Composición
-                        </h2>
-
-                        <div class="space-y-1.5 text-[var(--ink)] w-full mb-4 font-mono text-xs">
-                            <div class="flex items-center justify-between px-2.5 py-1.5 rounded-md border
-                                {{ $this->plano['Puente'] > 0 ? 'border-[var(--blue-accent)] bg-[var(--blue-accent)]/5' : 'border-[var(--line)] opacity-50' }}">
-                                <span class="font-semibold {{ $this->plano['Puente'] > 0 ? 'text-[var(--blue-accent)]' : 'text-[var(--ink-dim)]' }}">
-                                    Sobreluz arriba
-                                </span>
-                                <span>
-                                    {{ $this->plano['Puente'] > 0 ? number_format($this->plano['Puente'], 1) . ' cm' : 'Sin sobreluz' }}
-                                </span>
-                            </div>
-
-                            <div class="flex items-center justify-between px-2.5 py-1.5 rounded-md border border-[var(--accent)] bg-[var(--accent)]/5">
-                                <span class="font-semibold text-[var(--accent)]">Fila principal</span>
-                                <span class="font-mono">{{ implode(' - ', $this->distribucionHojas) }}</span>
-                            </div>
-                        </div>
-
-                        <p class="text-[10px] text-[var(--ink-dim)] -mt-2 mb-4">
-                            <span class="text-[var(--blue-accent)] font-semibold">F</span> Fijo ·
-                            <span class="text-[var(--accent)] font-semibold">C</span> Corredizo
-                        </p>
-
-                        <label class="text-sm block mb-1.5 text-[var(--ink-dim)]">Vidrio</label>
-
-                        <select wire:model.lazy="vidrio"
-                            class="w-full bg-[var(--panel-soft)] border border-[var(--line)] rounded-lg px-3 py-2 text-sm font-mono mb-4 text-[var(--ink)] cursor-pointer">
-                            <option value="simple">Simple 6mm</option>
-                            <option value="doble">Templado 6mm</option>
-                            <option value="dvh">DVH 6+12+6mm</option>
-                        </select>
-
-                        <label class="flex items-center justify-between cursor-pointer mb-3">
-                            <span class="text-sm">Mosquitero</span>
-                            <span class="relative inline-block w-9 h-5">
-                                <input type="checkbox" wire:model.lazy="mosquitero" class="sr-only peer">
-                                <span class="absolute inset-0 bg-[var(--line)] rounded-full peer-checked:bg-[var(--accent)] transition"></span>
-                                <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-[18px] shadow transition-transform"></span>
-                            </span>
-                        </label>
-                    </div>
-
-                    {{-- VISTA --}}
-
-                    <div>
-                        <h2 class="font-display text-sm font-semibold text-[var(--ink-dim)] uppercase tracking-wider mb-3">
-                            Vista del plano
-                        </h2>
-
-                        <label class="flex items-center justify-between cursor-pointer mb-3">
-                            <span class="text-sm">Mostrar cotas generales</span>
-                            <span class="relative inline-block w-9 h-5">
-                                <input type="checkbox" wire:model.lazy="mostrarCotas" class="sr-only peer">
-                                <span class="absolute inset-0 bg-[var(--line)] rounded-full peer-checked:bg-[var(--accent)] transition"></span>
-                                <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-[18px] shadow transition-transform"></span>
-                            </span>
-                        </label>
-
-                        <label class="flex items-center justify-between cursor-pointer mb-3">
-                            <span class="text-sm">Mostrar cota por hoja</span>
-                            <span class="relative inline-block w-9 h-5">
-                                <input type="checkbox" wire:model.lazy="mostrarCotaHoja" class="sr-only peer">
-                                <span class="absolute inset-0 bg-[var(--line)] rounded-full peer-checked:bg-[var(--accent)] transition"></span>
-                                <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-[18px] shadow transition-transform"></span>
-                            </span>
-                        </label>
-
-                        <label class="flex items-center justify-between cursor-pointer">
-                            <span class="text-sm">Mostrar etiquetas de partes</span>
-                            <span class="relative inline-block w-9 h-5">
-                                <input type="checkbox" wire:model.lazy="mostrarEtiquetas" class="sr-only peer">
-                                <span class="absolute inset-0 bg-[var(--line)] rounded-full peer-checked:bg-[var(--accent)] transition"></span>
-                                <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full peer-checked:translate-x-[18px] shadow transition-transform"></span>
-                            </span>
-                        </label>
-                    </div>
-
-                    {{-- CORTE VIDRIOS --}}
-
-                    <div class="pt-4 border-t border-[var(--line)]">
-                        <h2 class="font-display text-sm font-semibold text-[var(--ink-dim)] uppercase tracking-wider mb-3">
-                            Corte de vidrios
-                        </h2>
-
-                        <div class="overflow-x-auto">
-                            <table class="corte-vidrios w-full text-xs font-mono">
-                                <thead>
-                                    <tr class="text-[var(--ink-dim)] text-left border-b border-[var(--line)]">
-                                        <th>Hoja</th>
-                                        <th>Tipo</th>
-                                        <th class="text-right">Ancho</th>
-                                        <th class="text-right">Alto</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="text-[var(--ink)]">
-                                    @foreach ($this->cortesVidrio as $corte)
-                                        <tr class="border-b border-[var(--line)]/60" wire:key="corte-{{ $loop->index }}">
-                                            <td>{{ $corte['hoja'] }}</td>
-                                            <td class="{{ $corte['tipo'] === 'Fijo' ? 'text-[var(--blue-accent)]' : 'text-[var(--accent)]' }} font-semibold">
-                                                {{ $corte['tipo'] }}
-                                            </td>
-                                            <td class="text-right">{{ number_format($corte['ancho'], 1) }} cm</td>
-                                            <td class="text-right">{{ number_format($corte['alto'], 1) }} cm</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <p class="text-[10px] text-[var(--ink-dim)] mt-2 leading-snug">
-                            <strong>Primero:</strong> ancho − 0.5 cm y alto − 0.5 cm.<br>
-                            <strong>Fijo:</strong> ancho hoja − 4 cm · alto de banda − 5.5 cm.<br>
-                            <strong>Corredizo:</strong> ancho hoja + 4 cm · alto de banda − 6.5 cm.<br>
-                            <strong>Sobreluz:</strong> ancho fabricación − 4 cm · altura de sobreluz − 5.5 cm.
-                        </p>
-                    </div>
-
-                </aside>
-
-                {{-- =================================================
-                     DIBUJO — SVG generado en PHP, reactivo vía Livewire
-                ================================================== --}}
-
-                <section class="relative min-h-[600px] bg-[var(--panel)] border border-[var(--line)] rounded-xl grid-bg p-4 overflow-hidden">
-                    <span class="corner-tl"></span>
-                    <span class="corner-tr"></span>
-                    <span class="corner-bl"></span>
-                    <span class="corner-br"></span>
-
-                    <div class="w-full min-h-[500px] flex items-center justify-center">
-
-                        @php($p = $this->plano)
-
-                        <svg viewBox="0 0 1100 760" xmlns="http://www.w3.org/2000/svg"
-                            width="100%" preserveAspectRatio="xMidYMid meet"
-                            style="display:block;width:100%;height:auto;min-height:500px;">
-
-                            <defs>
-                                <pattern id="hatchGlass" width="9" height="9" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
-                                    <line x1="0" y1="0" x2="0" y2="9" stroke="#2C5F8A" stroke-opacity="0.20" stroke-width="1" />
-                                </pattern>
-
-                                <marker id="arrowStart" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto">
-                                    <path d="M7 0 L1 4 L7 8" fill="none" stroke="#B23A2E" stroke-width="1.2" />
-                                </marker>
-
-                                <marker id="arrowEnd" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
-                                    <path d="M1 0 L7 4 L1 8" fill="none" stroke="#B23A2E" stroke-width="1.2" />
-                                </marker>
-                            </defs>
-
-                            <rect x="0" y="0" width="1100" height="760" fill="#FAF9F6" />
-
-                            {{-- MARCO EXTERIOR --}}
-                            <rect x="{{ $p['x0'] }}" y="{{ $p['y0'] }}" width="{{ $p['w'] }}" height="{{ $p['h'] }}"
-                                fill="none" stroke="#23282D" stroke-width="3" />
-
-                            {{-- MARCO INTERIOR --}}
-                            <rect x="{{ $p['innerX'] }}" y="{{ $p['innerY'] }}" width="{{ $p['innerW'] }}" height="{{ $p['innerH'] }}"
-                                fill="none" stroke="#23282D" stroke-width="1.5" />
-
-                            {{-- SOBRELUZ --}}
-                            @if ($p['haySobreluz'])
-                                <rect x="{{ $p['innerX'] }}" y="{{ $p['innerY'] }}" width="{{ $p['innerW'] }}" height="{{ $p['sobreluzH'] }}"
-                                    fill="none" stroke="#23282D" stroke-width="1.3" />
-
-                                <rect x="{{ $p['innerX'] + $p['fh'] }}" y="{{ $p['innerY'] + $p['fh'] }}"
-                                    width="{{ max(2, $p['innerW'] - $p['fh'] * 2) }}" height="{{ max(2, $p['sobreluzH'] - $p['fh'] * 2) }}"
-                                    fill="#EAF2F7" />
-
-                                <rect x="{{ $p['innerX'] + $p['fh'] }}" y="{{ $p['innerY'] + $p['fh'] }}"
-                                    width="{{ max(2, $p['innerW'] - $p['fh'] * 2) }}" height="{{ max(2, $p['sobreluzH'] - $p['fh'] * 2) }}"
-                                    fill="url(#hatchGlass)" stroke="#2C5F8A" stroke-opacity="0.4" stroke-width="1" />
-
-                                <rect x="{{ $p['innerX'] }}" y="{{ $p['innerY'] + $p['sobreluzH'] }}"
-                                    width="{{ $p['innerW'] }}" height="{{ $p['travesanoPx'] }}"
-                                    fill="#F1EEE6" stroke="#23282D" stroke-width="1.5" />
-                            @endif
-
-                            {{-- HOJAS --}}
-                            @foreach ($p['panels'] as $panel)
-                                <rect x="{{ $panel['hx'] }}" y="{{ $p['filaY'] }}" width="{{ $panel['hw'] }}" height="{{ max($p['filaH'], 3) }}"
-                                    fill="none" stroke="#23282D" stroke-width="1.4" />
-
-                                <rect x="{{ $panel['gx'] }}" y="{{ $panel['gy'] }}" width="{{ $panel['gw'] }}" height="{{ $panel['gh'] }}"
-                                    fill="#EAF2F7" />
-
-                                <rect x="{{ $panel['gx'] }}" y="{{ $panel['gy'] }}" width="{{ $panel['gw'] }}" height="{{ $panel['gh'] }}"
-                                    fill="url(#hatchGlass)" stroke="#2C5F8A" stroke-opacity="0.45" stroke-width="1" />
-
-                                @if ($panel['esCorrediza'])
-                                    <rect x="{{ $panel['handleX'] }}" y="{{ $panel['handleY'] }}" width="6" height="30" rx="2" fill="#B23A2E" />
-
-                                    @if ($mosquitero)
-                                        <rect x="{{ $panel['hx'] + 4 }}" y="{{ $p['filaY'] + 4 }}"
-                                            width="{{ max($panel['hw'] - 8, 2) }}" height="{{ max($p['filaH'] - 8, 2) }}"
-                                            fill="none" stroke="#2C5F8A" stroke-width="1" stroke-dasharray="4 3" />
-                                    @endif
-                                @endif
-
-                                @if ($mostrarCotaHoja)
-                                    @php($midX = ($panel['hx'] + $panel['hx'] + $panel['hw']) / 2)
-                                    @php($dimY = $p['filaY'] + $p['filaH'] + 28)
-                                    <line x1="{{ $panel['hx'] }}" y1="{{ $dimY }}" x2="{{ $panel['hx'] + $panel['hw'] }}" y2="{{ $dimY }}"
-                                        stroke="#B23A2E" stroke-width="1" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
-                                    <line x1="{{ $panel['hx'] }}" y1="{{ $dimY - 7 }}" x2="{{ $panel['hx'] }}" y2="{{ $dimY + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                    <line x1="{{ $panel['hx'] + $panel['hw'] }}" y1="{{ $dimY - 7 }}" x2="{{ $panel['hx'] + $panel['hw'] }}" y2="{{ $dimY + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                    <rect x="{{ $midX - 35 }}" y="{{ $dimY - 22 }}" width="70" height="18" fill="#FAF9F6" />
-                                    <text x="{{ $midX }}" y="{{ $dimY - 9 }}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#B23A2E">
-                                        {{ $panel['cotaLabel'] }}
-                                    </text>
-                                @endif
-                            @endforeach
-
-                            {{-- RIELES --}}
-                            @if ($p['nCorredizas'] > 0)
-                                <line x1="{{ $p['x0'] }}" y1="{{ $p['railY1'] }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $p['railY1'] }}"
-                                    stroke="#2C5F8A" stroke-width="1.5" stroke-dasharray="6 4" />
-                                <line x1="{{ $p['x0'] }}" y1="{{ $p['railY2'] }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $p['railY2'] }}"
-                                    stroke="#2C5F8A" stroke-width="1.5" stroke-dasharray="6 4" />
-                            @endif
-
-                            {{-- COTAS GENERALES --}}
-                            @if ($mostrarCotas)
-                                @php($y1 = $p['y0'] - 48)
-                                @php($midXTotal = ($p['x0'] + $p['x0'] + $p['w']) / 2)
-                                <line x1="{{ $p['x0'] }}" y1="{{ $y1 }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $y1 }}" stroke="#B23A2E" stroke-width="1" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
-                                <line x1="{{ $p['x0'] }}" y1="{{ $y1 - 7 }}" x2="{{ $p['x0'] }}" y2="{{ $y1 + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                <line x1="{{ $p['x0'] + $p['w'] }}" y1="{{ $y1 - 7 }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $y1 + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                <rect x="{{ $midXTotal - 90 }}" y="{{ $y1 - 22 }}" width="180" height="18" fill="#FAF9F6" />
-                                <text x="{{ $midXTotal }}" y="{{ $y1 - 9 }}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#B23A2E">
-                                    {{ number_format($p['Wcm'], 1) }} cm ({{ number_format($p['Wcm'] * 10, 0) }} mm)
-                                </text>
-
-                                @php($y2 = $p['y0'] - 20)
-                                <line x1="{{ $p['x0'] }}" y1="{{ $y2 }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $y2 }}" stroke="#B23A2E" stroke-width="1" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
-                                <line x1="{{ $p['x0'] }}" y1="{{ $y2 - 7 }}" x2="{{ $p['x0'] }}" y2="{{ $y2 + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                <line x1="{{ $p['x0'] + $p['w'] }}" y1="{{ $y2 - 7 }}" x2="{{ $p['x0'] + $p['w'] }}" y2="{{ $y2 + 7 }}" stroke="#B23A2E" stroke-width="1" />
-                                <rect x="{{ $midXTotal - 90 }}" y="{{ $y2 - 22 }}" width="180" height="18" fill="#FAF9F6" />
-                                <text x="{{ $midXTotal }}" y="{{ $y2 - 9 }}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10" fill="#B23A2E">
-                                    FAB: {{ number_format($p['anchoFabricacion'], 1) }} cm
-                                </text>
-
-                                @php($x1 = $p['x0'] - 48)
-                                @php($midYTotal = ($p['y0'] + $p['y0'] + $p['h']) / 2)
-                                <line x1="{{ $x1 }}" y1="{{ $p['y0'] }}" x2="{{ $x1 }}" y2="{{ $p['y0'] + $p['h'] }}" stroke="#B23A2E" stroke-width="1" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
-                                <line x1="{{ $x1 - 7 }}" y1="{{ $p['y0'] }}" x2="{{ $x1 + 7 }}" y2="{{ $p['y0'] }}" stroke="#B23A2E" stroke-width="1" />
-                                <line x1="{{ $x1 - 7 }}" y1="{{ $p['y0'] + $p['h'] }}" x2="{{ $x1 + 7 }}" y2="{{ $p['y0'] + $p['h'] }}" stroke="#B23A2E" stroke-width="1" />
-                                <rect x="{{ $x1 - 48 }}" y="{{ $midYTotal - 9 }}" width="96" height="18" fill="#FAF9F6" />
-                                <text x="{{ $x1 }}" y="{{ $midYTotal + 4 }}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13" fill="#B23A2E" transform="rotate(-90 {{ $x1 }} {{ $midYTotal }})">
-                                    {{ number_format($p['Hcm'], 1) }} cm ({{ number_format($p['Hcm'] * 10, 0) }} mm)
-                                </text>
-
-                                @if ($p['haySobreluz'])
-                                    @php($xS = $p['x0'] + $p['w'] + 55)
-                                    @php($midYS = ($p['innerY'] + $p['innerY'] + $p['sobreluzH']) / 2)
-                                    <line x1="{{ $xS }}" y1="{{ $p['innerY'] }}" x2="{{ $xS }}" y2="{{ $p['innerY'] + $p['sobreluzH'] }}" stroke="#B23A2E" stroke-width="1" marker-start="url(#arrowStart)" marker-end="url(#arrowEnd)" />
-                                    <line x1="{{ $xS - 7 }}" y1="{{ $p['innerY'] }}" x2="{{ $xS + 7 }}" y2="{{ $p['innerY'] }}" stroke="#B23A2E" stroke-width="1" />
-                                    <line x1="{{ $xS - 7 }}" y1="{{ $p['innerY'] + $p['sobreluzH'] }}" x2="{{ $xS + 7 }}" y2="{{ $p['innerY'] + $p['sobreluzH'] }}" stroke="#B23A2E" stroke-width="1" />
-                                    <rect x="{{ $xS - 48 }}" y="{{ $midYS - 9 }}" width="96" height="18" fill="#FAF9F6" />
-                                    <text x="{{ $xS }}" y="{{ $midYS + 4 }}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#B23A2E" transform="rotate(-90 {{ $xS }} {{ $midYS }})">
-                                        {{ number_format($p['Puente'], 1) }} cm
-                                    </text>
-                                @endif
-                            @endif
-
-                            {{-- ETIQUETAS --}}
-                            @if ($mostrarEtiquetas)
-                                <circle cx="{{ $p['x0'] + $p['w'] * 0.20 }}" cy="{{ $p['y0'] }}" r="2.5" fill="#2C5F8A" />
-                                <line x1="{{ $p['x0'] + $p['w'] * 0.20 }}" y1="{{ $p['y0'] }}" x2="{{ $p['x0'] + $p['w'] * 0.20 - 40 }}" y2="{{ $p['y0'] - 85 }}" stroke="#2C5F8A" stroke-width="1" />
-                                <text x="{{ $p['x0'] + $p['w'] * 0.20 - 40 - 6 }}" y="{{ $p['y0'] - 81 }}" text-anchor="end" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Marco superior</text>
-
-                                <circle cx="{{ $p['x0'] }}" cy="{{ $p['y0'] + $p['h'] * 0.5 }}" r="2.5" fill="#2C5F8A" />
-                                <line x1="{{ $p['x0'] }}" y1="{{ $p['y0'] + $p['h'] * 0.5 }}" x2="{{ $p['x0'] - 85 }}" y2="{{ $p['y0'] + $p['h'] * 0.5 }}" stroke="#2C5F8A" stroke-width="1" />
-                                <text x="{{ $p['x0'] - 85 - 6 }}" y="{{ $p['y0'] + $p['h'] * 0.5 + 4 }}" text-anchor="end" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Jamba lateral</text>
-
-                                @if ($p['haySobreluz'])
-                                    <circle cx="{{ $p['innerX'] + $p['innerW'] / 2 }}" cy="{{ $p['innerY'] + $p['sobreluzH'] / 2 }}" r="2.5" fill="#2C5F8A" />
-                                    <line x1="{{ $p['innerX'] + $p['innerW'] / 2 }}" y1="{{ $p['innerY'] + $p['sobreluzH'] / 2 }}" x2="{{ $p['x0'] + $p['w'] * 0.58 }}" y2="{{ $p['innerY'] - 35 }}" stroke="#2C5F8A" stroke-width="1" />
-                                    <text x="{{ $p['x0'] + $p['w'] * 0.58 + 6 }}" y="{{ $p['innerY'] - 31 }}" text-anchor="start" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Sobreluz fijo</text>
-                                @endif
-
-                                @if ($p['nFijos'] > 0)
-                                    <circle cx="{{ $p['innerX'] + $p['innerW'] * 0.18 }}" cy="{{ $p['filaY'] + $p['filaH'] / 2 }}" r="2.5" fill="#2C5F8A" />
-                                    <line x1="{{ $p['innerX'] + $p['innerW'] * 0.18 }}" y1="{{ $p['filaY'] + $p['filaH'] / 2 }}" x2="{{ $p['x0'] - 80 }}" y2="{{ $p['filaY'] + $p['filaH'] * 0.40 }}" stroke="#2C5F8A" stroke-width="1" />
-                                    <text x="{{ $p['x0'] - 80 - 6 }}" y="{{ $p['filaY'] + $p['filaH'] * 0.40 + 4 }}" text-anchor="end" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Paño fijo</text>
-                                @endif
-
-                                @if ($p['nCorredizas'] > 0)
-                                    <circle cx="{{ $p['innerX'] + $p['innerW'] * 0.82 }}" cy="{{ $p['filaY'] + $p['filaH'] / 2 }}" r="2.5" fill="#2C5F8A" />
-                                    <line x1="{{ $p['innerX'] + $p['innerW'] * 0.82 }}" y1="{{ $p['filaY'] + $p['filaH'] / 2 }}" x2="{{ $p['x0'] + $p['w'] + 85 }}" y2="{{ $p['filaY'] + $p['filaH'] * 0.35 }}" stroke="#2C5F8A" stroke-width="1" />
-                                    <text x="{{ $p['x0'] + $p['w'] + 85 + 6 }}" y="{{ $p['filaY'] + $p['filaH'] * 0.35 + 4 }}" text-anchor="start" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Hoja corrediza</text>
-
-                                    <circle cx="{{ $p['x0'] + $p['w'] / 2 }}" cy="{{ $p['railY1'] }}" r="2.5" fill="#2C5F8A" />
-                                    <line x1="{{ $p['x0'] + $p['w'] / 2 }}" y1="{{ $p['railY1'] }}" x2="{{ $p['x0'] + $p['w'] / 2 }}" y2="{{ $p['y0'] + $p['h'] + 45 }}" stroke="#2C5F8A" stroke-width="1" />
-                                    <text x="{{ $p['x0'] + $p['w'] / 2 }}" y="{{ $p['y0'] + $p['h'] + 49 }}" text-anchor="start" font-family="Inter, sans-serif" font-size="12" fill="#2C5F8A" class="plano-svg-text">Riel corredizo</text>
-                                @endif
-                            @endif
-
-                            {{-- CARTOUCHE --}}
-                            @php($tbY = 760 - 155)
-                            @php($tbX = 70)
-                            @php($tbW = 1100 - 140)
-                            <rect x="{{ $tbX }}" y="{{ $tbY }}" width="{{ $tbW }}" height="125" fill="#FAF9F6" stroke="#23282D" stroke-width="1" />
-
-                            @php($col1 = $tbX + 18)
-                            @php($col2 = $tbX + $tbW * 0.37)
-                            @php($col3 = $tbX + $tbW * 0.68)
-
-                            @foreach ([
-                                [$col1, 22, 'SISTEMA', 'Corredizo · Mampara'],
-                                [$col1, 52, 'DIMENSIÓN', number_format($p['Wcm'], 1) . ' x ' . number_format($p['Hcm'], 1) . ' cm'],
-                                [$col1, 82, 'FABRICACIÓN', number_format($p['anchoFabricacion'], 1) . ' x ' . number_format($p['altoFabricacion'], 1) . ' cm'],
-                                [$col1, 112, 'N° HOJAS', $p['numHojas'] . ' hojas'],
-                                [$col2, 22, 'VIDRIO', $p['vidrioLabel']],
-                                [$col2, 52, 'PERFIL MARCO', '45 mm'],
-                                [$col2, 82, 'PERFIL HOJA', '40 mm'],
-                                [$col2, 112, 'MOSQUITERO', $mosquitero ? 'Sí' : 'No'],
-                                [$col3, 22, 'PLANO', 'SC-' . number_format($p['Wcm'], 0) . 'x' . number_format($p['Hcm'], 0)],
-                                [$col3, 52, 'FECHA', $p['fecha']],
-                                [$col3, 82, 'ESCALA', '1:' . $p['escala']],
-                                [$col3, 112, 'REVISIÓN', 'A'],
-                            ] as [$cx, $cyOffset, $label, $value])
-                                <text x="{{ $cx }}" y="{{ $tbY + $cyOffset }}" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#6B7280" letter-spacing="0.5">{{ $label }}</text>
-                                <text x="{{ $cx }}" y="{{ $tbY + $cyOffset + 15 }}" font-family="Inter, sans-serif" font-size="13" fill="#23282D" font-weight="600">{{ $value }}</text>
-                            @endforeach
-
-                        </svg>
-
-                    </div>
-                </section>
-
-            </main>
-
-            {{-- =====================================================
-                 PERFILES
-            ====================================================== --}}
-
-            <div class="max-w-[1400px] mx-auto px-6 pb-6">
-                <div class="bg-[var(--panel)] border border-[var(--line)] rounded-xl overflow-hidden shadow-sm">
-                    <div class="grid grid-cols-[1fr_auto_auto] gap-4 px-6 py-3 border-b border-[var(--line)] bg-[var(--panel-soft)] font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--ink-dim)]">
-                        <span>Detalle del perfil / accesorio</span>
-                        <span>Medida</span>
-                        <span class="text-right pr-1">Cant.</span>
-                    </div>
-
-                    <div>
-                        @foreach ($this->perfilesMampara as $perfil)
-                            <div class="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-6 py-3.5 border-b border-[var(--line)]/70" wire:key="perfil-{{ $loop->index }}">
-                                <div>
-                                    <p class="text-sm font-bold text-[var(--blue-accent)]">{{ $perfil['codigo'] }} - {{ $perfil['nombre'] }}</p>
-                                    <p class="font-mono text-[10px] text-[var(--ink-dim)]">COD: {{ $perfil['codigo'] }}</p>
-                                </div>
-                                <span class="font-mono text-sm font-bold px-3 py-1 rounded-md bg-[var(--panel-soft)] text-[var(--ink)] whitespace-nowrap">
-                                    {{ number_format($perfil['medida'], 1) }} cm
-                                </span>
-                                <span class="font-mono text-sm font-bold w-8 h-8 flex items-center justify-center rounded-md border border-[var(--line)] text-[var(--ink)]">
-                                    {{ $perfil['cant'] }}
-                                </span>
-                            </div>
-                        @endforeach
-                    </div>
-                </div>
-
-                <p class="text-[10px] text-[var(--ink-dim)] mt-2 leading-snug font-mono">
-                    Las piezas 7955, 5283 y 8413 utilizan la medida de fabricación:
-                    <strong>{{ number_format($this->anchoFabricacion, 1) }} cm</strong>.
-                    El descuento inicial de 0.5 cm ya está aplicado.
-                </p>
-            </div>
-
-        </div>
-
     </div>
 
-    <p class="max-w-[1400px] mx-auto px-6 pb-8 text-xs text-[var(--ink-dim)] font-mono">
-        Plano referencial de fabricación · perfiles y cotas aproximados
-        al sistema de mamparas correderas de aluminio "Corredizo" ·
-        verificar con proveedor antes de ejecutar la obra.
+    {{-- PESTAÑAS --}}
+    <div class="mb-5 flex items-center gap-2 overflow-x-auto pb-1">
+        @foreach ($mamparas as $index => $v)
+            <div class="group relative shrink-0" wire:key="mampara-tab-{{ $index }}">
+                <button type="button" wire:click="cambiarMampara({{ $index }})"
+                    class="inline-flex items-center gap-2 rounded-full px-5 py-2 text-xs font-extrabold uppercase tracking-wide transition
+                    {{ $mamparaActiva == $index
+                        ? 'bg-slate-800 text-white shadow-md'
+                        : 'bg-white text-slate-500 ring-1 ring-slate-200 hover:text-indigo-600 hover:ring-indigo-300' }}">
+                    <i class="fa-solid fa-table-cells-large"></i> {{ $v['nombre'] }}
+                </button>
+
+                @if (count($mamparas) > 1)
+                    <button type="button" wire:click.stop="eliminarMampara({{ $index }})" title="Eliminar"
+                        class="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] text-white shadow transition lg:opacity-0 lg:group-hover:opacity-100">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                @endif
+            </div>
+        @endforeach
+    </div>
+
+    {{-- RESUMEN --}}
+    <div class="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div class="{{ $tarjeta }} p-4">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Medida ingresada</p>
+            <p class="mt-1 font-mono text-xl font-bold text-slate-800">
+                {{ number_format($ancho, 1) }} × {{ number_format($alto, 1) }}
+                <span class="text-xs font-semibold text-slate-400">cm</span>
+            </p>
+        </div>
+
+        <div class="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">Medida fabricación</p>
+            <p class="mt-1 font-mono text-xl font-bold text-indigo-700">
+                {{ number_format($this->anchoFabricacion, 1) }} × {{ number_format($this->altoFabricacion, 1) }}
+                <span class="text-xs font-semibold">cm</span>
+            </p>
+            <p class="text-[10px] font-semibold text-indigo-400">Descuento inicial −0.5 × −0.5 cm</p>
+        </div>
+
+        <div class="rounded-2xl border border-sky-200 bg-sky-50 p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-sky-400">Área de vidrio</p>
+            <p class="mt-1 font-mono text-xl font-bold text-sky-700">
+                {{ number_format($pl['areaM2'], 2) }} <span class="text-xs font-semibold">m²</span>
+            </p>
+            <p class="text-[10px] font-semibold text-sky-400">Perímetro {{ number_format($pl['perimM'], 2) }} m</p>
+        </div>
+
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+            <p class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Hojas</p>
+            <p class="mt-1 font-mono text-xl font-bold text-emerald-700">
+                {{ $this->totalHojas }} <span class="text-xs font-semibold">en total</span>
+            </p>
+            <p class="text-[10px] font-semibold text-emerald-500">{{ $fijos }} fijos · {{ $corredizas }} corredizas</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-5 xl:grid-cols-12">
+
+        {{-- ===================== COLUMNA IZQUIERDA ===================== --}}
+        <div class="space-y-5 xl:col-span-4">
+
+            {{-- MEDIDAS --}}
+            <div class="{{ $tarjeta }} p-5">
+                <div class="mb-4 flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                        <i class="fa-solid fa-ruler-combined text-sm"></i>
+                    </span>
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Medidas</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Ancho</label>
+                        <div class="relative">
+                            <input type="number" step="0.1" min="0" inputmode="decimal" wire:model.lazy="ancho" class="{{ $inputClase }}">
+                            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Alto</label>
+                        <div class="relative">
+                            <input type="number" step="0.1" min="0" inputmode="decimal" wire:model.lazy="alto" class="{{ $inputClase }}">
+                            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">cm</span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- SOBRELUZ --}}
+                <div class="mt-4 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200">
+                    <label class="flex cursor-pointer select-none items-center justify-between gap-3">
+                        <span class="flex items-center gap-2 text-sm font-bold text-slate-700">
+                            <i class="fa-solid fa-window-maximize text-slate-400"></i>
+                            Con sobreluz
+                        </span>
+                        <span class="relative inline-flex items-center">
+                            <input type="checkbox" wire:model.live="conSobreluz" class="peer sr-only">
+                            <span class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-indigo-600 peer-focus-visible:ring-4 peer-focus-visible:ring-indigo-200"></span>
+                            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
+
+                    @if ($conSobreluz)
+                        <div class="mt-3">
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Puente (banda de hojas)</label>
+                            <div class="relative">
+                                <input type="number" step="0.1" min="0" inputmode="decimal" wire:model.lazy="puente" class="{{ $inputClase }}">
+                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">cm</span>
+                            </div>
+                            <p class="mt-2 rounded-lg bg-white px-3 py-2 font-mono text-[11px] leading-snug text-slate-500 ring-1 ring-slate-200">
+                                Sobreluz = {{ number_format($this->altoFabricacion, 1) }} − {{ number_format($puente, 1) }}
+                                = <b class="text-indigo-600">{{ number_format($this->sobreluzAltura, 1) }} cm</b>
+                            </p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            {{-- COMPOSICIÓN --}}
+            <div class="{{ $tarjeta }} p-5">
+                <div class="mb-4 flex items-center gap-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-50 text-sky-600">
+                        <i class="fa-solid fa-table-columns text-sm"></i>
+                    </span>
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Composición</h2>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    @foreach ([['corredizas', 'Corredizas', $corredizas], ['fijos', 'Fijos', $fijos]] as [$campo, $etiqueta, $valor])
+                        <div>
+                            <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">{{ $etiqueta }}</label>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" wire:click="$set('{{ $campo }}', {{ max(0, $valor - 1) }})"
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 active:scale-95">
+                                    <i class="fa-solid fa-minus text-xs"></i>
+                                </button>
+                                <input type="number" min="0" inputmode="numeric" wire:model.lazy="{{ $campo }}"
+                                    class="w-full min-w-0 rounded-xl border border-slate-300 bg-white px-2 py-2.5 text-center text-sm font-bold text-slate-900 transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none">
+                                <button type="button" wire:click="$set('{{ $campo }}', {{ $valor + 1 }})"
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-300 bg-white text-slate-600 transition hover:border-indigo-400 hover:text-indigo-600 active:scale-95">
+                                    <i class="fa-solid fa-plus text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+
+                {{-- Distribución --}}
+                <div class="mt-4">
+                    <p class="mb-1.5 text-[11px] font-bold uppercase tracking-wide text-slate-500">Distribución de la fila</p>
+                    <div class="flex flex-wrap items-center gap-1.5">
+                        @foreach ($this->distribucionHojas as $tipo)
+                            <span class="flex h-9 min-w-[2.25rem] items-center justify-center rounded-lg px-2 font-mono text-sm font-extrabold
+                                {{ $tipo === 'C' ? 'bg-rose-100 text-rose-700 ring-1 ring-rose-200' : 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-200' }}">
+                                {{ $tipo }}
+                            </span>
+                        @endforeach
+                    </div>
+                    <p class="mt-1.5 text-[11px] text-slate-400">
+                        <b class="text-indigo-600">F</b> fijo · <b class="text-rose-600">C</b> corredizo
+                        @if ($pl['haySobreluz'])
+                            · sobreluz fijo arriba ({{ number_format($pl['Puente'], 1) }} cm)
+                        @endif
+                    </p>
+                </div>
+
+                {{-- Vidrio --}}
+                <div class="mt-4">
+                    <label class="mb-1 block text-[11px] font-bold uppercase tracking-wide text-slate-500">Vidrio</label>
+                    <select wire:model.live="vidrio"
+                        class="w-full cursor-pointer rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-semibold text-slate-900 transition focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 focus:outline-none">
+                        <option value="simple">Simple 6mm</option>
+                        <option value="doble">Templado 6mm</option>
+                        <option value="dvh">DVH 6+12+6mm</option>
+                    </select>
+                </div>
+            </div>
+
+            {{-- VISTA Y OPCIONES --}}
+            <div class="{{ $tarjeta }} p-3">
+                <div class="mb-1 flex items-center gap-2 px-2 pt-2">
+                    <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-600">
+                        <i class="fa-solid fa-sliders text-sm"></i>
+                    </span>
+                    <h2 class="text-sm font-extrabold uppercase tracking-wider text-slate-700">Vista y opciones</h2>
+                </div>
+
+                @foreach ($opciones as [$clave, $texto, $icono])
+                    <label class="flex cursor-pointer select-none items-center justify-between gap-3 rounded-lg px-3 py-2.5 transition hover:bg-slate-50">
+                        <span class="flex items-center gap-2.5 text-sm font-medium text-slate-700">
+                            <i class="fa-solid {{ $icono }} w-4 text-center text-slate-400"></i>
+                            {{ $texto }}
+                        </span>
+                        <span class="relative inline-flex items-center">
+                            <input type="checkbox" wire:model.live="{{ $clave }}" class="peer sr-only">
+                            <span class="h-6 w-11 rounded-full bg-slate-300 transition peer-checked:bg-indigo-600 peer-focus-visible:ring-4 peer-focus-visible:ring-indigo-200"></span>
+                            <span class="absolute left-0.5 top-0.5 h-5 w-5 rounded-full bg-white shadow transition peer-checked:translate-x-5"></span>
+                        </span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- ===================== COLUMNA DERECHA: PLANO ===================== --}}
+        <section x-data="{ mostrarPlano: true }" class="{{ $tarjeta }} h-fit overflow-hidden xl:col-span-8">
+
+            <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 px-5 py-4">
+                <div class="flex items-center gap-3">
+                    <span class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-800 font-mono text-sm font-bold text-white">C</span>
+                    <div>
+                        <h2 class="text-base font-extrabold tracking-tight text-slate-800">Plano de mampara</h2>
+                        <p class="text-[11px] text-slate-400">Elevación frontal · cotas en cm / mm</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="rounded-full bg-slate-100 px-3 py-1 font-mono text-[11px] font-semibold text-slate-600">{{ $pl['fecha'] }}</span>
+                    <span class="rounded-full bg-indigo-50 px-3 py-1 font-mono text-[11px] font-semibold text-indigo-600">Escala 1:{{ $pl['escala'] }}</span>
+                    <button type="button" @click="mostrarPlano = !mostrarPlano"
+                        class="inline-flex items-center gap-2 rounded-full bg-slate-800 px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-white transition hover:bg-slate-700 active:scale-95">
+                        <i class="fa-solid" :class="mostrarPlano ? 'fa-eye-slash' : 'fa-eye'"></i>
+                        <span x-text="mostrarPlano ? 'Ocultar' : 'Mostrar'"></span>
+                    </button>
+                </div>
+            </div>
+
+            <div x-show="mostrarPlano" x-cloak class="bg-[#F8FAFC] p-3 sm:p-4">
+                <div class="flex w-full items-center justify-center overflow-x-auto">
+
+@php
+    $p = $this->plano;
+
+    $ink = '#1E293B';
+    $dim = '#C2410C';
+    $acc = '#4F46E5';
+
+    $x0 = $p['x0']; $y0 = $p['y0']; $W = $p['w']; $H = $p['h'];
+    $fm = $p['fm']; $fh = $p['fh'];
+    $xR = $x0 + $W; $yB = $y0 + $H;
+
+    // ancho de una "pastilla" de texto
+    $pw = fn ($t, $fs = 6.2) => mb_strlen($t) * $fs + 18;
+
+    // COTA HORIZONTAL (extensiones + marcas oblicuas + pastilla)
+    $dimH = function ($xa, $xb, $y, $yRef, $txt, $fs = 12) use ($dim) {
+        $m = ($xa + $xb) / 2;
+        $w = mb_strlen($txt) * $fs * 0.6 + 18;
+        $e = $yRef > $y ? -6 : 6;
+        return '<g fill="none" stroke="' . $dim . '" stroke-width="1">'
+            . '<line x1="' . $xa . '" y1="' . $yRef . '" x2="' . $xa . '" y2="' . ($y + $e) . '" stroke-opacity=".45"/>'
+            . '<line x1="' . $xb . '" y1="' . $yRef . '" x2="' . $xb . '" y2="' . ($y + $e) . '" stroke-opacity=".45"/>'
+            . '<line x1="' . $xa . '" y1="' . $y . '" x2="' . $xb . '" y2="' . $y . '"/>'
+            . '<line x1="' . ($xa - 5) . '" y1="' . ($y + 5) . '" x2="' . ($xa + 5) . '" y2="' . ($y - 5) . '" stroke-width="1.8"/>'
+            . '<line x1="' . ($xb - 5) . '" y1="' . ($y + 5) . '" x2="' . ($xb + 5) . '" y2="' . ($y - 5) . '" stroke-width="1.8"/>'
+            . '</g>'
+            . '<rect x="' . ($m - $w / 2) . '" y="' . ($y - 10) . '" width="' . $w . '" height="20" rx="10" fill="#fff" stroke="' . $dim . '" stroke-width=".8"/>'
+            . '<text x="' . $m . '" y="' . ($y + 4) . '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="' . $fs . '" font-weight="500" fill="' . $dim . '">' . e($txt) . '</text>';
+    };
+
+    // COTA VERTICAL
+    $dimV = function ($x, $ya, $yb, $xRef, $txt, $fs = 12) use ($dim) {
+        $m = ($ya + $yb) / 2;
+        $w = mb_strlen($txt) * $fs * 0.6 + 18;
+        $e = $xRef > $x ? -6 : 6;
+        return '<g fill="none" stroke="' . $dim . '" stroke-width="1">'
+            . '<line x1="' . $xRef . '" y1="' . $ya . '" x2="' . ($x + $e) . '" y2="' . $ya . '" stroke-opacity=".45"/>'
+            . '<line x1="' . $xRef . '" y1="' . $yb . '" x2="' . ($x + $e) . '" y2="' . $yb . '" stroke-opacity=".45"/>'
+            . '<line x1="' . $x . '" y1="' . $ya . '" x2="' . $x . '" y2="' . $yb . '"/>'
+            . '<line x1="' . ($x - 5) . '" y1="' . ($ya + 5) . '" x2="' . ($x + 5) . '" y2="' . ($ya - 5) . '" stroke-width="1.8"/>'
+            . '<line x1="' . ($x - 5) . '" y1="' . ($yb + 5) . '" x2="' . ($x + 5) . '" y2="' . ($yb - 5) . '" stroke-width="1.8"/>'
+            . '</g>'
+            . '<g transform="rotate(-90 ' . $x . ' ' . $m . ')">'
+            . '<rect x="' . ($x - $w / 2) . '" y="' . ($m - 10) . '" width="' . $w . '" height="20" rx="10" fill="#fff" stroke="' . $dim . '" stroke-width=".8"/>'
+            . '<text x="' . $x . '" y="' . ($m + 4) . '" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="' . $fs . '" font-weight="500" fill="' . $dim . '">' . e($txt) . '</text>'
+            . '</g>';
+    };
+
+    // ETIQUETA CON LÍNEA GUÍA
+    // modo 'l' = pastilla a la izquierda del punto final (x,y)
+    // modo 't' = pastilla arriba, su borde izquierdo en x
+    // modo 'te' = pastilla arriba, su borde derecho en x
+    $call = function ($px, $py, $txt, $x, $y, $mode = 'l') use ($acc) {
+        $w = mb_strlen($txt) * 6.2 + 18;
+        if ($mode === 'l') {
+            $rx = $x - $w; $ex = $x; $ey = $y;
+        } elseif ($mode === 't') {
+            $rx = $x; $ex = $x + $w / 2; $ey = $y + 11;
+        } else {
+            $rx = $x - $w; $ex = $x - $w / 2; $ey = $y + 11;
+        }
+        return '<line x1="' . $px . '" y1="' . $py . '" x2="' . $ex . '" y2="' . $ey . '" stroke="' . $acc . '" stroke-width="1" stroke-opacity=".7"/>'
+            . '<circle cx="' . $px . '" cy="' . $py . '" r="3" fill="#fff" stroke="' . $acc . '" stroke-width="1.5"/>'
+            . '<rect x="' . $rx . '" y="' . ($y - 11) . '" width="' . $w . '" height="22" rx="11" fill="' . $acc . '"/>'
+            . '<text x="' . ($rx + $w / 2) . '" y="' . ($y + 4) . '" text-anchor="middle" font-family="Inter, sans-serif" font-size="11" font-weight="600" fill="#fff">' . e($txt) . '</text>';
+    };
+
+    // primer paño fijo y primera hoja corrediza (para anclar etiquetas)
+    $pFijo = collect($p['panels'])->first(fn ($q) => !$q['esCorrediza']);
+    $pCorr = collect($p['panels'])->first(fn ($q) => $q['esCorrediza']);
+
+    $bandaHojas = max(0, $p['altoFabricacion'] - ($p['haySobreluz'] ? $p['Puente'] : 0));
+@endphp
+
+<svg viewBox="0 0 1100 760" xmlns="http://www.w3.org/2000/svg"
+    width="100%" preserveAspectRatio="xMidYMid meet"
+    style="display:block;width:100%;height:auto;min-height:500px;">
+
+    <defs>
+        {{-- fondo tipo papel milimetrado --}}
+        <pattern id="gridSmall" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M20 0H0V20" fill="none" stroke="#CBD5E1" stroke-opacity=".35" stroke-width=".6" />
+        </pattern>
+
+        {{-- pared / piso --}}
+        <pattern id="hatchWall" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="#94A3B8" stroke-opacity=".55" stroke-width="1" />
+        </pattern>
+
+        {{-- aluminio --}}
+        <linearGradient id="alu" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#F1F5F9" />
+            <stop offset=".45" stop-color="#CBD5E1" />
+            <stop offset="1" stop-color="#94A3B8" />
+        </linearGradient>
+        <linearGradient id="aluLeaf" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#F8FAFC" />
+            <stop offset="1" stop-color="#B6C2D1" />
+        </linearGradient>
+
+        {{-- vidrio --}}
+        <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#DFF0FB" />
+            <stop offset=".55" stop-color="#BBDDF2" />
+            <stop offset="1" stop-color="#9CC9E6" />
+        </linearGradient>
+
+        {{-- malla del mosquitero --}}
+        <pattern id="mesh" width="5" height="5" patternUnits="userSpaceOnUse">
+            <path d="M0 0H5M0 0V5" stroke="#475569" stroke-opacity=".35" stroke-width=".5" fill="none" />
+        </pattern>
+
+        <marker id="slideArrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+            <path d="M1 1 L8 5 L1 9 Z" fill="#334155" fill-opacity=".7" />
+        </marker>
+
+        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="125%">
+            <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0F172A" flood-opacity=".18" />
+        </filter>
+    </defs>
+
+    {{-- FONDO --}}
+    <rect width="1100" height="760" fill="#F8FAFC" />
+    <rect width="1100" height="760" fill="url(#gridSmall)" />
+
+    {{-- PARED (vano) Y PISO --}}
+    <rect x="{{ $x0 - 16 }}" y="{{ $y0 - 16 }}" width="{{ $W + 32 }}" height="{{ $H + 16 }}" fill="#EEF2F6" />
+    <rect x="{{ $x0 - 16 }}" y="{{ $y0 - 16 }}" width="{{ $W + 32 }}" height="{{ $H + 16 }}" fill="url(#hatchWall)" />
+    <rect x="{{ $x0 - 50 }}" y="{{ $yB }}" width="{{ $W + 100 }}" height="8" fill="url(#hatchWall)" />
+    <line x1="{{ $x0 - 50 }}" y1="{{ $yB }}" x2="{{ $xR + 50 }}" y2="{{ $yB }}" stroke="{{ $ink }}" stroke-width="2.2" />
+
+    {{-- MARCO EXTERIOR (anillo de aluminio) --}}
+    <g filter="url(#softShadow)">
+        <path fill-rule="evenodd" fill="url(#alu)" stroke="{{ $ink }}" stroke-width="1.8"
+            d="M{{ $x0 }} {{ $y0 }}h{{ $W }}v{{ $H }}h-{{ $W }}Z
+               M{{ $p['innerX'] }} {{ $p['innerY'] }}h{{ $p['innerW'] }}v{{ $p['innerH'] }}h-{{ $p['innerW'] }}Z" />
+    </g>
+    <rect x="{{ $x0 + $fm * 0.3 }}" y="{{ $y0 + $fm * 0.3 }}" width="{{ max(1, $W - $fm * 0.6) }}" height="{{ max(1, $H - $fm * 0.6) }}"
+        fill="none" stroke="#fff" stroke-opacity=".75" stroke-width="1" />
+
+    {{-- SOBRELUZ --}}
+    @if ($p['haySobreluz'])
+        @php
+            $slx = $p['innerX'] + $fh; $sly = $p['innerY'] + $fh;
+            $slw = max(2, $p['innerW'] - $fh * 2); $slh = max(2, $p['sobreluzH'] - $fh * 2);
+        @endphp
+        <path fill-rule="evenodd" fill="url(#aluLeaf)" stroke="{{ $ink }}" stroke-width="1.3"
+            d="M{{ $p['innerX'] }} {{ $p['innerY'] }}h{{ $p['innerW'] }}v{{ $p['sobreluzH'] }}h-{{ $p['innerW'] }}Z
+               M{{ $slx }} {{ $sly }}h{{ $slw }}v{{ $slh }}h-{{ $slw }}Z" />
+        <rect x="{{ $slx }}" y="{{ $sly }}" width="{{ $slw }}" height="{{ $slh }}" fill="url(#glass)" stroke="#2C5F8A" stroke-opacity=".55" stroke-width="1" />
+        <path d="M{{ $slx + $slw * .12 }} {{ $sly + $slh }} L{{ $slx + $slw * .20 }} {{ $sly }} L{{ $slx + $slw * .27 }} {{ $sly }} L{{ $slx + $slw * .19 }} {{ $sly + $slh }}Z" fill="#fff" fill-opacity=".45" />
+        <path d="M{{ $slx + $slw * .30 }} {{ $sly + $slh }} L{{ $slx + $slw * .33 }} {{ $sly }} L{{ $slx + $slw * .35 }} {{ $sly }} L{{ $slx + $slw * .32 }} {{ $sly + $slh }}Z" fill="#fff" fill-opacity=".35" />
+
+        {{-- travesaño --}}
+        <rect x="{{ $p['innerX'] }}" y="{{ $p['innerY'] + $p['sobreluzH'] }}" width="{{ $p['innerW'] }}" height="{{ $p['travesanoPx'] }}"
+            fill="url(#alu)" stroke="{{ $ink }}" stroke-width="1.4" />
+    @endif
+
+    {{-- HOJAS: primero fijas, después corredizas (quedan por encima, como en obra) --}}
+    @foreach ([false, true] as $pasada)
+        @foreach ($p['panels'] as $i => $panel)
+            @continue($panel['esCorrediza'] !== $pasada)
+
+            @php
+                $leafH = max($p['filaH'], 3);
+                $gcx = $panel['gx'] + $panel['gw'] / 2;
+                $gcy = $panel['gy'] + $panel['gh'] / 2;
+            @endphp
+
+            <g @if ($panel['esCorrediza']) filter="url(#softShadow)" @endif>
+                <path fill-rule="evenodd" fill="url(#aluLeaf)" stroke="{{ $ink }}" stroke-width="{{ $panel['esCorrediza'] ? 1.6 : 1.3 }}"
+                    d="M{{ $panel['hx'] }} {{ $p['filaY'] }}h{{ $panel['hw'] }}v{{ $leafH }}h-{{ $panel['hw'] }}Z
+                       M{{ $panel['gx'] }} {{ $panel['gy'] }}h{{ $panel['gw'] }}v{{ $panel['gh'] }}h-{{ $panel['gw'] }}Z" />
+            </g>
+
+            {{-- vidrio + reflejos --}}
+            <rect x="{{ $panel['gx'] }}" y="{{ $panel['gy'] }}" width="{{ $panel['gw'] }}" height="{{ $panel['gh'] }}"
+                fill="url(#glass)" stroke="#2C5F8A" stroke-opacity=".55" stroke-width="1" />
+            <path d="M{{ $panel['gx'] + $panel['gw'] * .12 }} {{ $panel['gy'] + $panel['gh'] }} L{{ $panel['gx'] + $panel['gw'] * .45 }} {{ $panel['gy'] }} L{{ $panel['gx'] + $panel['gw'] * .55 }} {{ $panel['gy'] }} L{{ $panel['gx'] + $panel['gw'] * .22 }} {{ $panel['gy'] + $panel['gh'] }}Z"
+                fill="#fff" fill-opacity=".40" />
+            <path d="M{{ $panel['gx'] + $panel['gw'] * .60 }} {{ $panel['gy'] + $panel['gh'] }} L{{ $panel['gx'] + $panel['gw'] * .72 }} {{ $panel['gy'] }} L{{ $panel['gx'] + $panel['gw'] * .76 }} {{ $panel['gy'] }} L{{ $panel['gx'] + $panel['gw'] * .64 }} {{ $panel['gy'] + $panel['gh'] }}Z"
+                fill="#fff" fill-opacity=".28" />
+
+            @if ($panel['esCorrediza'])
+                {{-- flecha de desplazamiento (alterna sentido) --}}
+                @php
+                    $s = min(34, $panel['gw'] * 0.28);
+                    $dir = ($i % 2 === 0) ? 1 : -1;
+                @endphp
+                <line x1="{{ $gcx - $s * $dir }}" y1="{{ $gcy }}" x2="{{ $gcx + $s * $dir }}" y2="{{ $gcy }}"
+                    stroke="#334155" stroke-opacity=".7" stroke-width="2.2" stroke-linecap="round" marker-end="url(#slideArrow)" />
+
+                {{-- tirador --}}
+                <rect x="{{ $panel['handleX'] }}" y="{{ $panel['handleY'] }}" width="6" height="30" rx="3" fill="#BE123C" stroke="#fff" stroke-width="1" />
+
+                {{-- mosquitero --}}
+                @if ($mosquitero)
+                    <rect x="{{ $panel['gx'] }}" y="{{ $panel['gy'] }}" width="{{ $panel['gw'] }}" height="{{ $panel['gh'] }}" fill="url(#mesh)" />
+                    <rect x="{{ $panel['hx'] + 4 }}" y="{{ $p['filaY'] + 4 }}" width="{{ max($panel['hw'] - 8, 2) }}" height="{{ max($p['filaH'] - 8, 2) }}"
+                        fill="none" stroke="#475569" stroke-width="1" stroke-dasharray="4 3" />
+                @endif
+            @endif
+        @endforeach
+    @endforeach
+
+    {{-- RIELES --}}
+    @if ($p['nCorredizas'] > 0)
+        <line x1="{{ $x0 }}" y1="{{ $p['railY1'] }}" x2="{{ $xR }}" y2="{{ $p['railY1'] }}" stroke="#475569" stroke-width="1.2" stroke-dasharray="6 4" />
+        <line x1="{{ $x0 }}" y1="{{ $p['railY2'] }}" x2="{{ $xR }}" y2="{{ $p['railY2'] }}" stroke="#475569" stroke-width="1.2" stroke-dasharray="6 4" />
+    @endif
+
+    {{-- COTAS POR HOJA --}}
+    @if ($mostrarCotaHoja)
+        @foreach ($p['panels'] as $panel)
+            {!! $dimH($panel['hx'], $panel['hx'] + $panel['hw'], $yB + 28, $p['filaY'] + $p['filaH'], $panel['cotaLabel'], 10) !!}
+        @endforeach
+    @endif
+
+    {{-- COTAS GENERALES --}}
+    @if ($mostrarCotas)
+        {!! $dimH($x0, $xR, $y0 - 52, $y0 - 20, number_format($p['Wcm'], 1) . ' cm  ·  ' . number_format($p['Wcm'] * 10, 0) . ' mm', 13) !!}
+        {!! $dimH($x0, $xR, $y0 - 28, $y0 - 20, 'FAB ' . number_format($p['anchoFabricacion'], 1) . ' cm', 10) !!}
+
+        {!! $dimV($x0 - 44, $y0, $yB, $x0 - 20, number_format($p['Hcm'], 1) . ' cm  ·  ' . number_format($p['Hcm'] * 10, 0) . ' mm', 13) !!}
+
+        @if ($p['haySobreluz'])
+            {!! $dimV($xR + 44, $p['innerY'], $p['innerY'] + $p['sobreluzH'], $xR + 20, 'SL ' . number_format($p['Puente'], 1), 11) !!}
+            {!! $dimV($xR + 44, $p['filaY'], $p['filaY'] + $p['filaH'], $xR + 20, 'HOJAS ' . number_format($bandaHojas, 1), 11) !!}
+        @endif
+    @endif
+
+    {{-- ETIQUETAS DE PARTES --}}
+    @if ($mostrarEtiquetas)
+        {{-- fila superior --}}
+        {!! $call($x0 + $W * 0.04, $y0 + $fm / 2, 'Marco superior', $x0 + 10, $y0 - 80, 'te') !!}
+
+        @if ($p['haySobreluz'])
+            {!! $call($p['innerX'] + $p['innerW'] / 2, $p['innerY'] + $p['sobreluzH'] / 2, 'Sobreluz fijo', $x0 + 30, $y0 - 80, 't') !!}
+        @endif
+
+        @if ($pCorr)
+            {!! $call($pCorr['gx'] + $pCorr['gw'] / 2, $p['filaY'] + $p['filaH'] * 0.22, 'Hoja corrediza', $x0 + 160, $y0 - 80, 't') !!}
+        @endif
+
+        {{-- lateral izquierdo --}}
+        @if ($pFijo)
+            {!! $call($pFijo['gx'] + $pFijo['gw'] / 2, $p['filaY'] + $p['filaH'] * 0.35, 'Paño fijo', $x0 - 62, $y0 + $H * 0.27, 'l') !!}
+        @endif
+
+        {!! $call($x0 + $fm / 2, $y0 + $H * 0.5, 'Jamba lateral', $x0 - 62, $y0 + $H * 0.5, 'l') !!}
+
+        @if ($p['nCorredizas'] > 0)
+            {!! $call($x0 + $W * 0.10, $p['railY1'], 'Riel corredizo', $x0 - 62, $y0 + $H * 0.73, 'l') !!}
+        @endif
+    @endif
+
+    {{-- CARTUCHO --}}
+    @php
+        $tbX = 70; $tbY = 616; $tbW = 960; $tbH = 124;
+        $cols = [$tbX + 26, $tbX + 26 + $tbW * 0.25, $tbX + 26 + $tbW * 0.50, $tbX + 26 + $tbW * 0.75];
+        $celdas = [
+            [0, 18, 'SISTEMA', 'Corredizo · Mampara'],
+            [0, 56, 'DIMENSIÓN', number_format($p['Wcm'], 1) . ' x ' . number_format($p['Hcm'], 1) . ' cm'],
+            [0, 94, 'FABRICACIÓN', number_format($p['anchoFabricacion'], 1) . ' x ' . number_format($p['altoFabricacion'], 1) . ' cm'],
+            [1, 18, 'N° HOJAS', $p['numHojas'] . ' hojas'],
+            [1, 56, 'VIDRIO', $p['vidrioLabel']],
+            [1, 94, 'MOSQUITERO', $mosquitero ? 'Sí' : 'No'],
+            [2, 18, 'PERFIL MARCO', '45 mm'],
+            [2, 56, 'PERFIL HOJA', '40 mm'],
+            [2, 94, 'ESCALA', '1:' . $p['escala']],
+            [3, 18, 'PLANO', 'SC-' . number_format($p['Wcm'], 0) . 'x' . number_format($p['Hcm'], 0)],
+            [3, 56, 'FECHA', $p['fecha']],
+            [3, 94, 'REVISIÓN', 'A'],
+        ];
+    @endphp
+
+    <rect x="{{ $tbX }}" y="{{ $tbY }}" width="{{ $tbW }}" height="{{ $tbH }}" rx="10" fill="#fff" stroke="#CBD5E1" stroke-width="1" />
+    <rect x="{{ $tbX }}" y="{{ $tbY }}" width="8" height="{{ $tbH }}" rx="4" fill="{{ $acc }}" />
+
+    @foreach ([1, 2, 3] as $k)
+        <line x1="{{ $cols[$k] - 16 }}" y1="{{ $tbY + 14 }}" x2="{{ $cols[$k] - 16 }}" y2="{{ $tbY + $tbH - 14 }}" stroke="#E2E8F0" stroke-width="1" />
+    @endforeach
+
+    @foreach ($celdas as [$c, $dy, $label, $value])
+        <text x="{{ $cols[$c] }}" y="{{ $tbY + $dy + 10 }}" font-family="JetBrains Mono, monospace" font-size="9.5" fill="#94A3B8" letter-spacing="1">{{ $label }}</text>
+        <text x="{{ $cols[$c] }}" y="{{ $tbY + $dy + 27 }}" font-family="Inter, sans-serif" font-size="13" font-weight="700" fill="{{ $ink }}">{{ $value }}</text>
+    @endforeach
+</svg>
+
+                </div>
+            </div>
+
+            <div x-show="!mostrarPlano" x-cloak class="py-16 text-center text-sm italic text-slate-400">
+                Plano oculto
+            </div>
+        </section>
+    </div>
+
+    {{-- ===================== CORTES Y PERFILES ===================== --}}
+    <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-2">
+
+        {{-- CORTE DE VIDRIOS --}}
+        <div class="{{ $tarjeta }} overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-sky-600 to-indigo-600 px-5 py-4 text-white">
+                <div class="flex items-center gap-2 font-bold">
+                    <i class="fa-solid fa-gem"></i> Corte de vidrios
+                </div>
+                <div class="flex items-center gap-2 text-[11px] font-bold">
+                    <span class="rounded-full bg-white/20 px-3 py-1">{{ count($this->cortesVidrio) }} piezas</span>
+                    <span class="rounded-full bg-white/20 px-3 py-1">{{ $pl['vidrioLabel'] }}</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-[1fr_auto_auto_auto] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span>Hoja</span>
+                <span>Tipo</span>
+                <span class="w-20 text-right">Ancho</span>
+                <span class="w-20 text-right">Alto</span>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                @forelse ($this->cortesVidrio as $corte)
+                    <div class="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 px-5 py-3 transition hover:bg-indigo-50/50" wire:key="corte-{{ $loop->index }}">
+                        <span class="text-sm font-bold text-slate-800">{{ $corte['hoja'] }}</span>
+                        <span class="rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide
+                            {{ $corte['tipo'] === 'Fijo' ? 'bg-indigo-100 text-indigo-700' : 'bg-rose-100 text-rose-700' }}">
+                            {{ $corte['tipo'] }}
+                        </span>
+                        <span class="w-20 text-right font-mono text-xs font-bold text-slate-700">{{ number_format($corte['ancho'], 1) }} cm</span>
+                        <span class="w-20 text-right font-mono text-xs font-bold text-slate-700">{{ number_format($corte['alto'], 1) }} cm</span>
+                    </div>
+                @empty
+                    <div class="py-12 text-center text-sm italic text-slate-400">Agrega hojas para ver los cortes</div>
+                @endforelse
+            </div>
+
+            <details class="border-t border-slate-200 px-5 py-3 text-[11px] leading-relaxed text-slate-500">
+                <summary class="cursor-pointer select-none font-bold uppercase tracking-wider text-slate-500">Descuentos aplicados</summary>
+                <ul class="mt-2 space-y-1">
+                    <li><b class="text-slate-700">Primero:</b> ancho − 0.5 cm y alto − 0.5 cm.</li>
+                    <li><b class="text-indigo-600">Fijo:</b> ancho hoja − 4 cm · alto de banda − 5.5 cm.</li>
+                    <li><b class="text-rose-600">Corredizo:</b> ancho hoja + 4 cm · alto de banda − 6.5 cm.</li>
+                    <li><b class="text-slate-700">Sobreluz:</b> ancho fabricación − 4 cm · altura de sobreluz − 5.5 cm.</li>
+                </ul>
+            </details>
+        </div>
+
+        {{-- PERFILES --}}
+        <div class="{{ $tarjeta }} overflow-hidden">
+            <div class="flex flex-wrap items-center justify-between gap-2 bg-gradient-to-r from-indigo-600 to-blue-600 px-5 py-4 text-white">
+                <div class="flex items-center gap-2 font-bold">
+                    <i class="fa-solid fa-list-check"></i> Perfiles y accesorios
+                </div>
+                <span class="rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold">{{ count($this->perfilesMampara) }} ítems</span>
+            </div>
+
+            <div class="grid grid-cols-[1fr_auto_auto] gap-4 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                <span>Detalle</span>
+                <span>Medida</span>
+                <span class="w-9 text-center">Cant.</span>
+            </div>
+
+            <div class="divide-y divide-slate-100">
+                @foreach ($this->perfilesMampara as $perfil)
+                    <div class="grid grid-cols-[1fr_auto_auto] items-center gap-4 px-5 py-3 transition hover:bg-indigo-50/50" wire:key="perfil-{{ $loop->index }}">
+                        <div class="flex min-w-0 items-center gap-3">
+                            <span class="rounded-md bg-indigo-50 px-2 py-1 font-mono text-[11px] font-bold text-indigo-600">{{ $perfil['codigo'] }}</span>
+                            <span class="truncate text-sm font-bold text-slate-800">{{ $perfil['nombre'] }}</span>
+                        </div>
+                        <span class="whitespace-nowrap rounded-lg bg-slate-100 px-3 py-1.5 font-mono text-xs font-bold text-slate-700">
+                            {{ number_format($perfil['medida'], 1) }} cm
+                        </span>
+                        <span class="flex h-8 w-9 items-center justify-center rounded-lg bg-emerald-100 font-mono text-xs font-extrabold text-emerald-700">
+                            {{ $perfil['cant'] }}
+                        </span>
+                    </div>
+                @endforeach
+            </div>
+
+            <p class="border-t border-slate-200 px-5 py-3 text-[11px] leading-relaxed text-slate-500">
+                7955, 5283 y 8413 usan la medida de fabricación:
+                <b class="text-slate-700">{{ number_format($this->anchoFabricacion, 1) }} cm</b>
+                (el descuento inicial de 0.5 cm ya está aplicado).
+            </p>
+        </div>
+    </div>
+
+    <p class="mt-5 text-center text-[11px] text-slate-400">
+        Plano referencial de fabricación · perfiles y cotas aproximados al sistema de mamparas correderas
+        de aluminio "Corredizo" · verificar con proveedor antes de ejecutar la obra.
     </p>
 
 </div>

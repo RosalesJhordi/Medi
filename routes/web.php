@@ -19,3 +19,6 @@ Route::livewire('/puertas', 'puertas.home')->name('puertas');
 Route::livewire('/mamparas','mamparas.home')->name('mamparas');
 //curvo
 Route::livewire('/curvo', 'curvo.home')->name('curvo');
+
+//baldosas
+Route::livewire('/baldosas', 'baldosas.home')->name('baldosas');

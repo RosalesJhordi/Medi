@@ -155,7 +155,7 @@ new class extends Component {
             $det["U F ($a)"] = ['label' => '3003', 'alto' => $a, 'cantidad' => $n];
         }
         foreach ($f as $a => $n) {
-            $det["ANGULO ($a)"] = ['label' => '4104', 'alto' =>  $this->trunc($this->altoPuente - $this->pffijo), 'cantidad' => $n];
+            $det["ANGULO ($a)"] = ['label' => '4104', 'alto' => $this->trunc($this->altoPuente - $this->pffijo), 'cantidad' => $n];
         }
         foreach ($c as $a => $n) {
             $det["H ($a)"] = ['label' => '8220', 'alto' => $a + 0.6, 'cantidad' => $n];
@@ -180,6 +180,46 @@ new class extends Component {
             'alto' => $this->trunc($this->altoPuente - $this->pfcorrediza),
             'cantidad' => $this->numCorredizas * 2,
         ];
+
+        // Medidas de vidrio por módulo (Fijo / Corrediza)
+        $vidrios = [];
+        foreach ($this->medidasBloques as $b) {
+            $anchoV = number_format($b['ancho'], 1, '.', '');
+            $altoV = number_format($b['alto'], 1, '.', '');
+            $key = $b['tipo'] . '|' . $anchoV . '|' . $altoV;
+            $vidrios[$key] = ($vidrios[$key] ?? 0) + 1;
+        }
+
+        foreach ($vidrios as $key => $n) {
+            [$tipo, $anchoV, $altoV] = explode('|', $key);
+            $nombre = ($tipo === 'F' ? 'Vidrio Fijo' : 'Vidrio Corrediza');
+
+            $det[$nombre] = [
+                'nombre' => $nombre,
+                'alto' => "{$anchoV} x {$altoV}",
+                'cantidad' => $n,
+            ];
+        }
+
+        // Medidas de vidrio de sobreluz
+        $sobreluzGroup = [];
+        foreach ($this->sobreluzPartes as $parte) {
+            $anchoV = number_format($parte['ancho'], 1, '.', '');
+            $altoV = number_format($parte['alto'], 1, '.', '');
+            $key = $anchoV . '|' . $altoV;
+            $sobreluzGroup[$key] = ($sobreluzGroup[$key] ?? 0) + 1;
+        }
+
+        foreach ($sobreluzGroup as $key => $n) {
+            [$anchoV, $altoV] = explode('|', $key);
+            $nombre = "Vidrio Sobreluz";
+
+            $det[$nombre] = [
+                'nombre' => $nombre,
+                'alto' => "{$anchoV} x {$altoV}",
+                'cantidad' => $n,
+            ];
+        }
 
         return $det;
     }
@@ -469,7 +509,7 @@ new class extends Component {
 ?>
 
 <div wire:cloak class="relative p-2 md:p-6 max-w-6xl mx-auto mb-[100px]">
-<p class="text-2xl text-slate-500 font-extrabold tracking-widest mb-6">
+    <p class="text-2xl text-slate-500 font-extrabold tracking-widest mb-6">
         {{ $ventanas[$ventanaActiva]['nombre'] ?? '—' }}
     </p>
     <div
@@ -599,100 +639,107 @@ new class extends Component {
 
                 <div id="plano-2d"
                     class="w-full h-full border-[2px] lg:border-[8px] border-gray-900 bg-gray-800 relative flex flex-col shadow-inner overflow-hidden">
-                    @if ($this->altoSup > 0)
-                        <div class="w-full flex lg:border-b-[12px] border-b-[4px] border-gray-900"
-                            style="height: {{ ($this->altoSup / $alto) * 100 }}%;">
-                            @foreach ($this->sobreluzPartes as $parte)
-                                <div
-                                    class="flex-1 border-r-[2px] border-gray-900 bg-sky-100 relative flex flex-col items-center justify-center">
-                                    <span
-                                        class="lg:text-[9px] text-[8px] font-black text-blue-800">{{ $parte['label'] }}</span>
-                                    <span
-                                        class="lg:text-[10px] text-[9px] font-mono font-black text-blue-900">{{ $parte['ancho'] }}
-                                        x
-                                        {{ $parte['alto'] }}</span>
+
+                    <img src="{{ asset('img/ChatGPT Image 10 sept 2026, 09_49_30 p.m..png') }}" alt="Fondo"
+                        class="absolute inset-0 w-full h-full object-cover z-0">
+
+                    <div class="relative z-10 flex flex-col w-full h-full">
+                        @if ($this->altoSup > 0)
+                            <div class="w-full flex lg:border-b-[12px] border-b-[4px] border-gray-900"
+                                style="height: {{ ($this->altoSup / $alto) * 100 }}%;">
+                                @foreach ($this->sobreluzPartes as $parte)
+                                    <div
+                                        class="flex-1 border-r-[2px] border-gray-900 bg-sky-100 relative flex flex-col items-center justify-center">
+                                        <span
+                                            class="lg:text-[9px] text-[8px] font-black text-blue-800">{{ $parte['label'] }}</span>
+                                        <span
+                                            class="lg:text-[10px] text-[9px] font-mono font-black text-blue-900">{{ $parte['ancho'] }}
+                                            x
+                                            {{ $parte['alto'] }}</span>
+                                    </div>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <div id="bloques" class="flex w-full grow overflow-hidden"
+                            style="height: {{ ($this->altoInf / $alto) * 100 }}%;" x-data="{ abiertos: [] }">
+
+                            @php
+                                $tipos = array_column($this->medidasBloques, 'tipo');
+                                $total = count($tipos);
+
+                                $config = [];
+                                foreach ($tipos as $i => $tipo) {
+                                    if ($tipo !== 'C') {
+                                        $config[$i] = ['puedeAbrir' => false, 'direccion' => null];
+                                        continue;
+                                    }
+
+                                    $fijoIzqInmediato = null;
+                                    for ($k = $i - 1; $k >= 0; $k--) {
+                                        if ($tipos[$k] === 'F') {
+                                            $fijoIzqInmediato = $k;
+                                            break;
+                                        }
+                                        if ($tipos[$k] === 'C') {
+                                            break;
+                                        }
+                                    }
+
+                                    $fijoDerInmediato = null;
+                                    for ($k = $i + 1; $k < $total; $k++) {
+                                        if ($tipos[$k] === 'F') {
+                                            $fijoDerInmediato = $k;
+                                            break;
+                                        }
+                                        if ($tipos[$k] === 'C') {
+                                            break;
+                                        }
+                                    }
+
+                                    if ($fijoIzqInmediato !== null) {
+                                        $config[$i] = ['puedeAbrir' => true, 'direccion' => 'izquierda'];
+                                    } elseif ($fijoDerInmediato !== null) {
+                                        $config[$i] = ['puedeAbrir' => true, 'direccion' => 'derecha'];
+                                    } else {
+                                        $config[$i] = ['puedeAbrir' => false, 'direccion' => null];
+                                    }
+                                }
+                            @endphp
+
+                            @foreach ($this->medidasBloques as $i => $mod)
+                                @php
+                                    $cfg = $config[$i];
+                                    $puedeAbrir = $cfg['puedeAbrir'];
+                                    $direccion = $cfg['direccion'];
+                                @endphp
+
+                                <div @if ($mod['tipo'] === 'C' && $puedeAbrir) @click="abiertos.includes({{ $i }})
+                ? abiertos = abiertos.filter(v => v !== {{ $i }})
+                : abiertos.push({{ $i }})" @endif
+                                    class="flex-1 border-r-[2px] border-gray-900 relative flex flex-col cursor-pointer items-center justify-center {{ $mod['tipo'] === 'C' ? 'bg-sky-200 border border-b-[15px]' : 'bg-sky-50 ' }}"
+                                    @if ($mod['tipo'] === 'C' && $puedeAbrir) :style="abiertos.includes({{ $i }})
+            ? 'transform: translateX({{ $direccion === 'izquierda' ? '-' : '' }}100%); z-index: 10; transition: transform 0.8s ease;'
+            : 'transform: translateX(0); z-index: 1; transition: transform 0.8s ease;'" @endif>
+
+                                    {{-- Badge tipo --}}
+                                    <div
+                                        class="absolute top-3 left-3 px-2 py-0.5 text-[10px] font-black {{ $mod['tipo'] === 'C' ? 'bg-yellow-400 text-yellow-900' : 'bg-green-600 text-white' }}">
+                                        {{ $mod['tipo'] }}{{ $i + 1 }}
+                                    </div>
+
+                                    {{-- Medidas --}}
+                                    <div class="text-center">
+                                        <p class="lg:text-[10px] text-[8px] font-black text-blue-800 uppercase">Vidrio
+                                        </p>
+                                        <span class="lg:text-[11px] text-[9px] font-mono font-black text-blue-950">
+                                            {{ $mod['ancho'] }} x {{ $mod['alto'] }}
+                                        </span>
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
-                    @endif
-
-                    <div id="bloques" class="flex w-full grow overflow-hidden"
-                        style="height: {{ ($this->altoInf / $alto) * 100 }}%;" x-data="{ abierto: null }">
-
-                        @php
-                            $tipos = array_column($this->medidasBloques, 'tipo');
-                            $total = count($tipos);
-
-                            $config = [];
-                            foreach ($tipos as $i => $tipo) {
-                                if ($tipo !== 'C') {
-                                    $config[$i] = ['puedeAbrir' => false, 'direccion' => null];
-                                    continue;
-                                }
-
-                                $fijoIzqInmediato = null;
-                                for ($k = $i - 1; $k >= 0; $k--) {
-                                    if ($tipos[$k] === 'F') {
-                                        $fijoIzqInmediato = $k;
-                                        break;
-                                    }
-                                    if ($tipos[$k] === 'C') {
-                                        break;
-                                    }
-                                }
-
-                                $fijoDerInmediato = null;
-                                for ($k = $i + 1; $k < $total; $k++) {
-                                    if ($tipos[$k] === 'F') {
-                                        $fijoDerInmediato = $k;
-                                        break;
-                                    }
-                                    if ($tipos[$k] === 'C') {
-                                        break;
-                                    }
-                                }
-
-                                if ($fijoIzqInmediato !== null) {
-                                    $config[$i] = ['puedeAbrir' => true, 'direccion' => 'izquierda'];
-                                } elseif ($fijoDerInmediato !== null) {
-                                    $config[$i] = ['puedeAbrir' => true, 'direccion' => 'derecha'];
-                                } else {
-                                    $config[$i] = ['puedeAbrir' => false, 'direccion' => null];
-                                }
-                            }
-                        @endphp
-
-                        @foreach ($this->medidasBloques as $i => $mod)
-                            @php
-                                $cfg = $config[$i];
-                                $puedeAbrir = $cfg['puedeAbrir'];
-                                $direccion = $cfg['direccion'];
-                            @endphp
-
-                            <div @if ($mod['tipo'] === 'C') @click="(abierto === null || abierto === {{ $i }}) &&
-                            (abierto = abierto === {{ $i }} ? null : {{ $i }})" @endif
-                                class="flex-1 border-r-[2px] border-gray-900 relative flex flex-col cursor-pointer items-center justify-center {{ $mod['tipo'] === 'C' ? 'bg-sky-200 border border-b-[15px]' : 'bg-sky-50 ' }}"
-                                @if ($mod['tipo'] === 'C' && $puedeAbrir) :style="abierto === {{ $i }}
-                    ? 'transform: translateX({{ $direccion === 'izquierda' ? '-' : '' }}100%); z-index: 10; transition: transform 0.8s ease;'
-                    : 'transform: translateX(0); z-index: 1; transition: transform 0.8s ease;'" @endif>
-
-                                {{-- Badge tipo --}}
-                                <div
-                                    class="absolute top-3 left-3 px-2 py-0.5 text-[10px] font-black {{ $mod['tipo'] === 'C' ? 'bg-yellow-400 text-yellow-900' : 'bg-green-600 text-white' }}">
-                                    {{ $mod['tipo'] }}{{ $i + 1 }}
-                                </div>
-
-                                {{-- Medidas --}}
-                                <div class="text-center">
-                                    <p class="lg:text-[10px] text-[8px] font-black text-blue-800 uppercase">Vidrio</p>
-                                    <span class="lg:text-[11px] text-[9px] font-mono font-black text-blue-950">
-                                        {{ $mod['ancho'] }} x {{ $mod['alto'] }}
-                                    </span>
-                                </div>
-                            </div>
-                        @endforeach
                     </div>
-
                 </div>
             </div>
             <div class="w-full  mt-10 p-2 lg:p-6 bg-white rounded-2xl border border-dashed border-slate-300">
@@ -790,17 +837,19 @@ new class extends Component {
                 <tbody class="divide-y w-full divide-slate-100">
                     @foreach ($this->detalleModulos as $item)
                         @php
-                            $codigoBuscado = $item['label'];
-                            $nombreProductoExcel = 'Perfil no identificado';
+                            $codigoBuscado = $item['label'] ?? null;
+                            $nombreProductoExcel = $item['nombre'] ?? 'Perfil no identificado';
 
-                            foreach ($this->data as $nombreCompleto) {
-                                if (str_contains((string) $nombreCompleto, (string) $codigoBuscado)) {
-                                    $nombreProductoExcel = $nombreCompleto;
-                                    break;
+                            if ($codigoBuscado) {
+                                foreach ($this->data as $nombreCompleto) {
+                                    if (str_contains((string) $nombreCompleto, (string) $codigoBuscado)) {
+                                        $nombreProductoExcel = $nombreCompleto;
+                                        break;
+                                    }
                                 }
-                            }
-                            if ($codigoBuscado === '8115' && isset($item['tipo'])) {
-                                $nombreProductoExcel .= ' - ' . $item['tipo'];
+                                if ($codigoBuscado === '8115' && isset($item['tipo'])) {
+                                    $nombreProductoExcel .= ' - ' . $item['tipo'];
+                                }
                             }
                         @endphp
 
@@ -809,8 +858,10 @@ new class extends Component {
                                 <div class="flex flex-col">
                                     <span
                                         class="lg:text-sm text-xs font-bold text-slate-700 group-hover:text-blue-700 transition-colors">{{ $nombreProductoExcel }}</span>
-                                    <span class="lg:text-[10px] text-[8px] font-mono font-bold text-slate-400">COD:
-                                        {{ $codigoBuscado }}</span>
+                                    @if ($codigoBuscado)
+                                        <span class="lg:text-[10px] text-[8px] font-mono font-bold text-slate-400">COD:
+                                            {{ $codigoBuscado }}</span>
+                                    @endif
                                 </div>
                             </td>
                             <td class="lg:px-6 px-3 lg:py-4 py-2 text-center">

@@ -1,0 +1,155 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+
+  <defs>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#38BDF8"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#E0F2FE"/>
+      <stop offset="1" stop-color="#7DD3FC"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow
+        dx="0"
+        dy="12"
+        stdDeviation="12"
+        flood-opacity=".16"
+      />
+    </filter>
+  </defs>
+
+  <!-- Marco -->
+  <rect
+    x="105"
+    y="55"
+    width="302"
+    height="402"
+    rx="22"
+    fill="none"
+    stroke="#CBD5E1"
+    stroke-width="18"
+  />
+
+  <!-- Marco interior -->
+  <rect
+    x="125"
+    y="75"
+    width="262"
+    height="362"
+    rx="12"
+    fill="#F8FAFC"
+  />
+
+  <!-- Hoja de puerta -->
+  <path
+    d="M145 78
+       L365 102
+       L365 420
+       L145 435
+       Z"
+    fill="url(#blue)"
+    filter="url(#shadow)"
+  />
+
+  <!-- Panel de vidrio -->
+  <path
+    d="M178 112
+       L332 128
+       L332 275
+       L178 267
+       Z"
+    fill="url(#glass)"
+    stroke="#FFFFFF"
+    stroke-width="9"
+  />
+
+  <!-- Reflejo -->
+  <path
+    d="M187 120
+       L260 127
+       L187 205
+       Z"
+    fill="#FFFFFF"
+    opacity=".45"
+  />
+
+  <!-- Panel inferior -->
+  <path
+    d="M178 294
+       L332 300
+       L332 392
+       L178 404
+       Z"
+    fill="none"
+    stroke="#FFFFFF"
+    stroke-width="9"
+    opacity=".95"
+  />
+
+  <!-- División central -->
+  <path
+    d="M174 280 L336 287"
+    stroke="#FFFFFF"
+    stroke-width="10"
+    stroke-linecap="round"
+  />
+
+  <!-- Manija moderna -->
+  <rect
+    x="282"
+    y="242"
+    width="58"
+    height="14"
+    rx="7"
+    fill="#FFFFFF"
+  />
+
+  <circle
+    cx="286"
+    cy="249"
+    r="14"
+    fill="#E2E8F0"
+  />
+
+  <!-- Cerradura -->
+  <rect
+    x="303"
+    y="263"
+    width="10"
+    height="24"
+    rx="5"
+    fill="#FFFFFF"
+  />
+
+  <!-- Bisagras -->
+  <rect
+    x="145"
+    y="145"
+    width="12"
+    height="42"
+    rx="6"
+    fill="#E2E8F0"
+  />
+
+  <rect
+    x="145"
+    y="340"
+    width="12"
+    height="42"
+    rx="6"
+    fill="#E2E8F0"
+  />
+
+  <!-- Línea inferior decorativa -->
+  <path
+    d="M190 416 L320 407"
+    stroke="#FFFFFF"
+    stroke-width="4"
+    stroke-linecap="round"
+    opacity=".5"
+  />
+
+</svg>
